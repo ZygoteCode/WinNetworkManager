@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>WinNetworkManager.App</RootNamespace>
+    <AssemblyName>WinNetworkManager</AssemblyName>
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Description>WinNetworkManager — per-process network monitoring and diagnostics for Windows.</Description>
+    <AssemblyTitle>WinNetworkManager</AssemblyTitle>
+    <!-- Only 64-bit is supported (x64 / ARM64): native layouts are verified for 64-bit pointers. -->
+    <PlatformTarget Condition="'$(RuntimeIdentifier)' == ''">x64</PlatformTarget>
+    <TieredPGO>true</TieredPGO>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WinNetworkManager.Engine\WinNetworkManager.Engine.csproj" />
+    <ProjectReference Include="..\WinNetworkManager.UI\WinNetworkManager.UI.csproj" />
+    <ProjectReference Include="..\WinNetworkManager.Infrastructure\WinNetworkManager.Infrastructure.csproj" />
+    <ProjectReference Include="..\WinNetworkManager.Diagnostics\WinNetworkManager.Diagnostics.csproj" />
+    <!-- The elevated helper is deployed next to WinNetworkManager.exe (it shares the same runtime and libraries). -->
+    <ProjectReference Include="..\WinNetworkManager.Collector\WinNetworkManager.Collector.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\AppIcon.ico" />
+    <Resource Include="Assets\AppIcon-64.png" />
+    <Resource Include="Assets\AppIcon-256.png" />
+    <None Remove="Assets\AppIcon-512.png" />
+  </ItemGroup>
+</Project>

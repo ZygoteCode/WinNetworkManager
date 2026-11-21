@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\WinNetworkManager.Telemetry\WinNetworkManager.Telemetry.csproj" />
+    <!-- The real helper executable is copied next to the tests (HelperProcessTests). -->
+    <ProjectReference Include="..\..\src\WinNetworkManager.Collector\WinNetworkManager.Collector.csproj" />
+  </ItemGroup>
+</Project>

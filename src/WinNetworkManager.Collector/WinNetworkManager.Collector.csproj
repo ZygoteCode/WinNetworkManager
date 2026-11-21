@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- No window and no console: the helper is started by WinNetworkManager, never by the user. -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>WinNetworkManager.Collector</RootNamespace>
+    <AssemblyName>WinNetworkManager.Collector</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\WinNetworkManager.App\Assets\AppIcon.ico</ApplicationIcon>
+    <PlatformTarget Condition="'$(RuntimeIdentifier)' == ''">x64</PlatformTarget>
+    <Description>Elevated per-process network collector helper of WinNetworkManager (kernel event tracing session host).</Description>
+    <AssemblyTitle>WinNetworkManager collector helper</AssemblyTitle>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WinNetworkManager.Telemetry\WinNetworkManager.Telemetry.csproj" />
+  </ItemGroup>
+</Project>

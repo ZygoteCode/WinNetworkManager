@@ -1,0 +1,23 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <!--
+    Windows Installer package. Build it through build\publish.ps1, which publishes the application first and passes:
+      -p:PublishDir=<self-contained publish folder>\  -p:ProductVersion=<x.y.z>  -p:Platform=x64|arm64
+  -->
+  <PropertyGroup>
+    <OutputName>WinNetworkManager</OutputName>
+    <Platform Condition="'$(Platform)' == ''">x64</Platform>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">2.0.0</ProductVersion>
+    <DefineConstants>ProductVersion=$(ProductVersion);PublishDir=$(PublishDir);AppIcon=$(MSBuildThisFileDirectory)..\src\WinNetworkManager.App\Assets\AppIcon.ico</DefineConstants>
+    <!-- C#-specific settings inherited from Directory.Build.props do not apply to the installer. -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <DebugType>none</DebugType>
+    <!--
+      ICE60: .NET assemblies are language-neutral (no Language column needed).
+      ICE61: AllowSameVersionUpgrades is intentional (reinstalling the same version replaces it cleanly).
+    -->
+    <SuppressIces>ICE60;ICE61</SuppressIces>
+  </PropertyGroup>
+  <Target Name="CheckPublishDir" BeforeTargets="Build">
+    <Error Condition="'$(PublishDir)' == '' Or !Exists('$(PublishDir)WinNetworkManager.exe')" Text="PublishDir must point to a published WinNetworkManager folder (run build\publish.ps1)." />
+  </Target>
+</Project>

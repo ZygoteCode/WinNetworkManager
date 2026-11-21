@@ -1,0 +1,446 @@
+<UserControl x:Class="WinNetworkManager.App.Views.DiagnosticsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:WinNetworkManager.App.ViewModels"
+             xmlns:common="clr-namespace:WinNetworkManager.App.Common"
+             xmlns:controls="clr-namespace:WinNetworkManager.UI.Controls;assembly=WinNetworkManager.UI"
+             xmlns:ui="clr-namespace:WinNetworkManager.UI;assembly=WinNetworkManager.UI"
+             mc:Ignorable="d" d:DataContext="{d:DesignInstance vm:DiagnosticsViewModel}"
+             d:DesignWidth="1100" d:DesignHeight="800">
+  <UserControl.Resources>
+    <Style x:Key="FieldLabel" TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="0,0,6,0" />
+    </Style>
+    <Style x:Key="Field" TargetType="FrameworkElement">
+      <Setter Property="Margin" Value="0,0,12,8" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="Message" TargetType="Border" BasedOn="{StaticResource InfoBar}">
+      <Setter Property="Margin" Value="0,4,0,12" />
+    </Style>
+    <Style x:Key="KeyText" TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
+      <Setter Property="Margin" Value="0,0,16,6" />
+    </Style>
+    <Style x:Key="ValueBox" TargetType="TextBox" BasedOn="{StaticResource TextBox.Value}">
+      <Setter Property="Margin" Value="0,0,0,6" />
+    </Style>
+  </UserControl.Resources>
+
+  <DockPanel Margin="{DynamicResource Pad.Page}">
+    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+      <TextBlock Text="Diagnostics" Style="{StaticResource Text.Title}" />
+      <TextBlock Style="{StaticResource Text.Secondary}" Margin="0,2,0,0" TextWrapping="Wrap"
+                 Text="Network tests for a destination you choose. Nothing runs until you start it, and every test can be stopped. No elevation is needed." />
+    </StackPanel>
+
+    <TabControl SelectedIndex="{Binding ToolIndex}" AutomationProperties.Name="Diagnostic tools">
+      <!-- ═════════ Ping ═════════ -->
+      <TabItem Header="Ping">
+        <DockPanel Margin="0,12,0,0">
+          <WrapPanel DockPanel.Dock="Top">
+            <TextBox Style="{StaticResource TextBox.Mono}" Width="280" Margin="0,0,12,8" Text="{Binding Target, UpdateSourceTrigger=PropertyChanged}"
+                     ui:Ui.Placeholder="Host name or IP address" AutomationProperties.Name="Destination">
+              <TextBox.InputBindings>
+                <KeyBinding Key="Enter" Command="{Binding RunPingCommand}" />
+              </TextBox.InputBindings>
+            </TextBox>
+            <ComboBox ItemsSource="{Binding Families}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Family}" Width="130" Margin="0,0,12,8" AutomationProperties.Name="Address family" ToolTip="Address family when the name has both IPv4 and IPv6 addresses" />
+            <TextBlock Text="Count" Style="{StaticResource FieldLabel}" />
+            <TextBox Text="{Binding PingCount, UpdateSourceTrigger=PropertyChanged}" Width="56" Margin="0,0,12,8" AutomationProperties.Name="Number of requests" IsEnabled="{Binding PingContinuous, Converter={StaticResource InverseBool}}" />
+            <ToggleButton Content="Until stopped" IsChecked="{Binding PingContinuous}" Margin="0,0,12,8" />
+            <TextBlock Text="Bytes" Style="{StaticResource FieldLabel}" />
+            <TextBox Text="{Binding PingPayloadSize, UpdateSourceTrigger=PropertyChanged}" Width="64" Margin="0,0,12,8" AutomationProperties.Name="Payload size in bytes" />
+            <ToggleButton Content="Don't fragment" IsChecked="{Binding PingDontFragment}" Margin="0,0,12,8" ToolTip="Set the IPv4 don't-fragment flag" />
+            <Button Style="{StaticResource Button.Accent}" Content="Start" ui:Ui.Icon="{x:Static ui:Glyphs.Play}" Command="{Binding RunPingCommand}" Margin="0,0,8,8"
+                    Visibility="{Binding RunPingCommand.IsRunning, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}" />
+            <Button Content="Stop" ui:Ui.Icon="{x:Static ui:Glyphs.Stop}" Command="{Binding RunPingCancelCommand}" Margin="0,0,8,8"
+                    Visibility="{Binding RunPingCommand.IsRunning, Converter={StaticResource BoolToVisibility}}" />
+          </WrapPanel>
+          <Border DockPanel.Dock="Top" Style="{StaticResource Message}" Visibility="{Binding PingMessage, Converter={StaticResource NullToVisibility}}">
+            <StackPanel>
+              <TextBlock Text="{Binding PingMessage}" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding PingSummaryText}" Style="{StaticResource Text.BodyStrong}" Margin="0,4,0,0" TextWrapping="Wrap" Typography.NumeralAlignment="Tabular"
+                         Visibility="{Binding PingSummaryText, Converter={StaticResource NullToVisibility}}" />
+            </StackPanel>
+          </Border>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="16" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Style="{StaticResource Panel}">
+              <DataGrid ItemsSource="{Binding PingReplies}" AutomationProperties.Name="Echo replies" CanUserSortColumns="False">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="#" Binding="{Binding Reply.Sequence}" Width="50" ElementStyle="{StaticResource Cell.Numeric}" HeaderStyle="{StaticResource ColumnHeader.Right}" />
+                  <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="90" ElementStyle="{StaticResource Cell.Secondary}" />
+                  <DataGridTextColumn Header="From" Binding="{Binding Reply.FromText}" Width="*" ElementStyle="{StaticResource Cell.Mono}" />
+                  <DataGridTextColumn Header="Result" Binding="{Binding Reply.StatusText}" Width="150" />
+                  <DataGridTextColumn Header="Round trip" Binding="{Binding Reply.RoundTripText}" Width="90" ElementStyle="{StaticResource Cell.Numeric}" HeaderStyle="{StaticResource ColumnHeader.Right}" />
+                  <DataGridTextColumn Header="TTL" Binding="{Binding Reply.TtlText}" Width="56" ElementStyle="{StaticResource Cell.Numeric}" HeaderStyle="{StaticResource ColumnHeader.Right}" />
+                </DataGrid.Columns>
+              </DataGrid>
+            </Border>
+            <Border Grid.Column="2" Style="{StaticResource Card}" VerticalAlignment="Top">
+              <StackPanel>
+                <TextBlock Text="Round-trip time" Style="{StaticResource Text.BodyStrong}" Margin="0,0,0,4" />
+                <TextBlock Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,0,0,10"
+                           Text="Reported by Windows with 1 ms resolution. Gaps are requests without a reply." />
+                <controls:TimeSeriesChart Height="220" Series="{Binding PingSeries}" StartTime="{Binding PingChartStart}" Step="{Binding PingChartStep}" ValueKind="Milliseconds" Title="Ping round-trip time" />
+              </StackPanel>
+            </Border>
+          </Grid>
+        </DockPanel>
+      </TabItem>
+
+      <!-- ═════════ Traceroute ═════════ -->
+      <TabItem Header="Traceroute">
+        <DockPanel Margin="0,12,0,0">
+          <WrapPanel DockPanel.Dock="Top">
+            <TextBox Style="{StaticResource TextBox.Mono}" Width="280" Margin="0,0,12,8" Text="{Binding Target, UpdateSourceTrigger=PropertyChanged}"
+                     ui:Ui.Placeholder="Host name or IP address" AutomationProperties.Name="Destination">
+              <TextBox.InputBindings>
+                <KeyBinding Key="Enter" Command="{Binding RunTracerouteCommand}" />
+              </TextBox.InputBindings>
+            </TextBox>
+            <ComboBox ItemsSource="{Binding Families}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Family}" Width="130" Margin="0,0,12,8" AutomationProperties.Name="Address family" />
+            <TextBlock Text="Max hops" Style="{StaticResource FieldLabel}" />
+            <TextBox Text="{Binding TracerouteMaxHops, UpdateSourceTrigger=PropertyChanged}" Width="56" Margin="0,0,12,8" AutomationProperties.Name="Maximum hops" />
+            <ToggleButton Content="Resolve names" IsChecked="{Binding TracerouteResolveNames}" Margin="0,0,12,8" ToolTip="Look up the name of each router (one reverse DNS query per hop)" />
+            <Button Style="{StaticResource Button.Accent}" Content="Start" ui:Ui.Icon="{x:Static ui:Glyphs.Play}" Command="{Binding RunTracerouteCommand}" Margin="0,0,8,8"
+                    Visibility="{Binding RunTracerouteCommand.IsRunning, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}" />
+            <Button Content="Stop" ui:Ui.Icon="{x:Static ui:Glyphs.Stop}" Command="{Binding RunTracerouteCancelCommand}" Margin="0,0,8,8"
+                    Visibility="{Binding RunTracerouteCommand.IsRunning, Converter={StaticResource BoolToVisibility}}" />
+          </WrapPanel>
+          <Border DockPanel.Dock="Top" Style="{StaticResource Message}" Visibility="{Binding TracerouteMessage, Converter={StaticResource NullToVisibility}}">
+            <TextBlock Text="{Binding TracerouteMessage}" TextWrapping="Wrap" />
+          </Border>
+          <Border Style="{StaticResource Panel}">
+            <DataGrid ItemsSource="{Binding Hops}" AutomationProperties.Name="Traceroute hops" CanUserSortColumns="False">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Hop" Binding="{Binding Hop}" Width="50" ElementStyle="{StaticResource Cell.Numeric}" HeaderStyle="{StaticResource ColumnHeader.Right}" />
+                <DataGridTextColumn Header="Address" Binding="{Binding AddressText}" Width="220" ElementStyle="{StaticResource Cell.Mono}" />
+                <DataGridTextColumn Header="Name" Binding="{Binding HostName}" Width="*" ElementStyle="{StaticResource Cell.Secondary}" />
+                <DataGridTextColumn Header="Round trips" Binding="{Binding RoundTripsText}" Width="230" ElementStyle="{StaticResource Cell.Numeric}" HeaderStyle="{StaticResource ColumnHeader.Right}" />
+                <DataGridTextColumn Header="Result" Binding="{Binding StatusText}" Width="170" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </Border>
+        </DockPanel>
+      </TabItem>
+
+      <!-- ═════════ TCP port ═════════ -->
+      <TabItem Header="TCP port">
+        <DockPanel Margin="0,12,0,0">
+          <WrapPanel DockPanel.Dock="Top">
+            <TextBox Style="{StaticResource TextBox.Mono}" Width="280" Margin="0,0,12,8" Text="{Binding Target, UpdateSourceTrigger=PropertyChanged}"
+                     ui:Ui.Placeholder="Host name or IP address" AutomationProperties.Name="Destination">
+              <TextBox.InputBindings>
+                <KeyBinding Key="Enter" Command="{Binding RunTcpCommand}" />
+              </TextBox.InputBindings>
+            </TextBox>
+            <TextBlock Text="Port" Style="{StaticResource FieldLabel}" />
+            <TextBox Text="{Binding TcpPort, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="0,0,12,8" AutomationProperties.Name="Port" />
+            <ComboBox ItemsSource="{Binding Families}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Family}" Width="130" Margin="0,0,12,8" AutomationProperties.Name="Address family" />
+            <ToggleButton Content="All addresses" IsChecked="{Binding TcpAllAddresses}" Margin="0,0,12,8" ToolTip="Test every address the name resolves to (up to 8)" />
+            <Button Style="{StaticResource Button.Accent}" Content="Test" ui:Ui.Icon="{x:Static ui:Glyphs.Play}" Command="{Binding RunTcpCommand}" Margin="0,0,8,8"
+                    Visibility="{Binding RunTcpCommand.IsRunning, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}" />
+            <Button Content="Stop" ui:Ui.Icon="{x:Static ui:Glyphs.Stop}" Command="{Binding RunTcpCancelCommand}" Margin="0,0,8,8"
+                    Visibility="{Binding RunTcpCommand.IsRunning, Converter={StaticResource BoolToVisibility}}" />
+          </WrapPanel>
+          <Border DockPanel.Dock="Top" Style="{StaticResource Message}" Visibility="{Binding TcpMessage, Converter={StaticResource NullToVisibility}}">
+            <TextBlock Text="{Binding TcpMessage}" TextWrapping="Wrap" />
+          </Border>
+          <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,8,0,0"
+                     Text="A full TCP handshake is made and closed immediately; no data is sent. The handshake time includes one network round trip." />
+          <Border Style="{StaticResource Panel}">
+            <DataGrid ItemsSource="{Binding TcpResults}" AutomationProperties.Name="TCP test results" CanUserSortColumns="False">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Endpoint" Binding="{Binding Remote}" Width="260" ElementStyle="{StaticResource Cell.Mono}" />
+                <DataGridTextColumn Header="Result" Binding="{Binding Outcome}" Width="110" />
+                <DataGridTextColumn Header="Handshake" Binding="{Binding ConnectText}" Width="100" ElementStyle="{StaticResource Cell.Numeric}" HeaderStyle="{StaticResource ColumnHeader.Right}" />
+                <DataGridTextColumn Header="Local endpoint" Binding="{Binding LocalText}" Width="220" ElementStyle="{StaticResource Cell.Mono}" />
+                <DataGridTextColumn Header="Details" Binding="{Binding Message}" Width="*" ElementStyle="{StaticResource Cell.Secondary}" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </Border>
+        </DockPanel>
+      </TabItem>
+
+      <!-- ═════════ DNS ═════════ -->
+      <TabItem Header="DNS">
+        <DockPanel Margin="0,12,0,0">
+          <WrapPanel DockPanel.Dock="Top">
+            <TextBox Style="{StaticResource TextBox.Mono}" Width="280" Margin="0,0,12,8" Text="{Binding DnsName, UpdateSourceTrigger=PropertyChanged}"
+                     ui:Ui.Placeholder="Name, or IP address for a reverse lookup" AutomationProperties.Name="Name to look up">
+              <TextBox.InputBindings>
+                <KeyBinding Key="Enter" Command="{Binding RunDnsCommand}" />
+              </TextBox.InputBindings>
+            </TextBox>
+            <Border Style="{StaticResource SegmentHost}" Margin="0,0,12,8">
+              <StackPanel Orientation="Horizontal">
+                <RadioButton Style="{StaticResource Segment}" Content="Windows resolver" GroupName="DnsMode" IsChecked="{Binding DnsMode, Converter={StaticResource Equals}, ConverterParameter=System}"
+                             ToolTip="Resolve like applications do: hosts file, DNS cache, configured servers, LLMNR/mDNS" />
+                <RadioButton Style="{StaticResource Segment}" Content="Query a server" GroupName="DnsMode" IsChecked="{Binding DnsMode, Converter={StaticResource Equals}, ConverterParameter=Server}"
+                             ToolTip="Send one query directly to a DNS server and show the full answer" />
+              </StackPanel>
+            </Border>
+            <StackPanel Orientation="Horizontal" Visibility="{Binding DnsMode, Converter={x:Static common:EnumVisibility.Instance}, ConverterParameter=Server}">
+              <ComboBox ItemsSource="{Binding DnsTypes}" SelectedItem="{Binding DnsType}" Width="90" Margin="0,0,12,8" AutomationProperties.Name="Record type" />
+              <TextBlock Text="Server" Style="{StaticResource FieldLabel}" />
+              <ComboBox IsEditable="True" Text="{Binding DnsServer, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding DnsServers}" DisplayMemberPath="Display"
+                        TextSearch.TextPath="Address" Width="230" Margin="0,0,12,8" AutomationProperties.Name="DNS server" ToolTip="Any DNS server address, or one configured on your interfaces" />
+            </StackPanel>
+            <Button Style="{StaticResource Button.Accent}" Content="Look up" ui:Ui.Icon="{x:Static ui:Glyphs.Search}" Command="{Binding RunDnsCommand}" Margin="0,0,8,8"
+                    Visibility="{Binding RunDnsCommand.IsRunning, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}" />
+            <Button Content="Stop" ui:Ui.Icon="{x:Static ui:Glyphs.Stop}" Command="{Binding RunDnsCancelCommand}" Margin="0,0,8,8"
+                    Visibility="{Binding RunDnsCommand.IsRunning, Converter={StaticResource BoolToVisibility}}" />
+          </WrapPanel>
+          <Border DockPanel.Dock="Top" Style="{StaticResource Message}" Visibility="{Binding DnsMessage, Converter={StaticResource NullToVisibility}}">
+            <TextBlock Text="{Binding DnsMessage}" TextWrapping="Wrap" />
+          </Border>
+          <TextBlock DockPanel.Dock="Top" Text="{Binding DnsSummary}" Style="{StaticResource Text.BodyStrong}" TextWrapping="Wrap" Margin="0,0,0,10"
+                     Visibility="{Binding DnsSummary, Converter={StaticResource NullToVisibility}}" />
+          <Border Style="{StaticResource Panel}">
+            <DataGrid ItemsSource="{Binding DnsRecords}" AutomationProperties.Name="DNS records">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Section" Binding="{Binding Section}" Width="90" ElementStyle="{StaticResource Cell.Secondary}" />
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="260" ElementStyle="{StaticResource Cell.Mono}" />
+                <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="70" />
+                <DataGridTextColumn Header="TTL" Binding="{Binding Ttl}" Width="80" ElementStyle="{StaticResource Cell.Numeric}" HeaderStyle="{StaticResource ColumnHeader.Right}" />
+                <DataGridTextColumn Header="Data" Binding="{Binding Data}" Width="*" ElementStyle="{StaticResource Cell.Mono}" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </Border>
+        </DockPanel>
+      </TabItem>
+
+      <!-- ═════════ HTTP / TLS ═════════ -->
+      <TabItem Header="HTTP / TLS">
+        <DockPanel Margin="0,12,0,0">
+          <WrapPanel DockPanel.Dock="Top">
+            <TextBox Style="{StaticResource TextBox.Mono}" Width="380" Margin="0,0,12,8" Text="{Binding HttpUrl, UpdateSourceTrigger=PropertyChanged}"
+                     ui:Ui.Placeholder="https://example.com/" AutomationProperties.Name="URL">
+              <TextBox.InputBindings>
+                <KeyBinding Key="Enter" Command="{Binding RunHttpCommand}" />
+              </TextBox.InputBindings>
+            </TextBox>
+            <ComboBox ItemsSource="{Binding HttpMethods}" SelectedItem="{Binding HttpMethod}" Width="80" Margin="0,0,12,8" AutomationProperties.Name="Method" />
+            <ToggleButton Content="Follow redirects" IsChecked="{Binding HttpFollowRedirects}" Margin="0,0,12,8" />
+            <ToggleButton Content="Check revocation" IsChecked="{Binding HttpCheckRevocation}" Margin="0,0,12,8" ToolTip="Ask the certificate authority whether the certificate was revoked (contacts its CRL/OCSP servers)" />
+            <Button Style="{StaticResource Button.Accent}" Content="Probe" ui:Ui.Icon="{x:Static ui:Glyphs.Globe}" Command="{Binding RunHttpCommand}" Margin="0,0,8,8"
+                    Visibility="{Binding RunHttpCommand.IsRunning, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}" />
+            <Button Content="Stop" ui:Ui.Icon="{x:Static ui:Glyphs.Stop}" Command="{Binding RunHttpCancelCommand}" Margin="0,0,8,8"
+                    Visibility="{Binding RunHttpCommand.IsRunning, Converter={StaticResource BoolToVisibility}}" />
+          </WrapPanel>
+          <Border DockPanel.Dock="Top" Style="{StaticResource Message}" Visibility="{Binding HttpMessage, Converter={StaticResource NullToVisibility}}">
+            <TextBlock Text="{Binding HttpMessage}" TextWrapping="Wrap" />
+          </Border>
+          <ListBox DockPanel.Dock="Top" ItemsSource="{Binding HttpSteps}" SelectedItem="{Binding SelectedHttpStep}" Margin="0,0,0,12" MaxHeight="110"
+                   AutomationProperties.Name="Requests" Visibility="{Binding SelectedHttpStep, Converter={StaticResource NullToVisibility}}">
+            <ListBox.ItemTemplate>
+              <DataTemplate DataType="{x:Type vm:HttpStepView}">
+                <TextBlock>
+                  <Run Text="{Binding Status, Mode=OneWay}" FontWeight="SemiBold" /><Run Text="   " /><Run Text="{Binding Url, Mode=OneWay}" FontFamily="{DynamicResource Font.Mono}" />
+                </TextBlock>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False"
+                        Visibility="{Binding SelectedHttpStep, Converter={StaticResource NullToVisibility}}">
+            <Grid DataContext="{Binding SelectedHttpStep}">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <StackPanel>
+                <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.ColumnSpan="2" Text="Timing" Style="{StaticResource Text.BodyStrong}" Margin="0,0,0,10" />
+                    <TextBlock Grid.Row="1" Text="Server" Style="{StaticResource KeyText}" />
+                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Remote, Mode=OneWay}" Style="{StaticResource ValueBox}" AutomationProperties.Name="Server endpoint" />
+                    <TextBlock Grid.Row="2" Text="Name resolution" Style="{StaticResource KeyText}" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Dns}" Typography.NumeralAlignment="Tabular" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="3" Text="TCP connect" Style="{StaticResource KeyText}" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Connect}" Typography.NumeralAlignment="Tabular" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="4" Text="TLS handshake" Style="{StaticResource KeyText}" />
+                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Tls}" Typography.NumeralAlignment="Tabular" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="5" Text="Server response" Style="{StaticResource KeyText}" ToolTip="From sending the request to the first byte of the answer: server processing plus one round trip" />
+                    <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Wait}" Typography.NumeralAlignment="Tabular" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="6" Text="Total" Style="{StaticResource KeyText}" />
+                    <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding Total}" Style="{StaticResource Text.BodyStrong}" Typography.NumeralAlignment="Tabular" Margin="0,0,0,6" />
+                    <TextBlock Grid.Row="7" Text="Encryption" Style="{StaticResource KeyText}" />
+                    <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding TlsSummary}" TextWrapping="Wrap" />
+                  </Grid>
+                </Border>
+                <Border Style="{StaticResource Panel}" MinHeight="160">
+                  <DataGrid ItemsSource="{Binding Step.Headers}" AutomationProperties.Name="Response headers" CanUserSortColumns="False" MaxHeight="360">
+                    <DataGrid.Columns>
+                      <DataGridTextColumn Header="Header" Binding="{Binding Name}" Width="200" ElementStyle="{StaticResource Cell.Mono}" />
+                      <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*" ElementStyle="{StaticResource Cell.Mono}" />
+                    </DataGrid.Columns>
+                  </DataGrid>
+                </Border>
+              </StackPanel>
+              <Border Grid.Column="2" Style="{StaticResource Card}" VerticalAlignment="Top" Visibility="{Binding Step.Certificate, Converter={StaticResource NullToVisibility}}">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+                  <StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,10">
+                    <controls:IconText Style="{StaticResource Icon}" Text="{x:Static ui:Glyphs.Certificate}" Margin="0,0,8,0" />
+                    <TextBlock Text="Server certificate" Style="{StaticResource Text.BodyStrong}" />
+                  </StackPanel>
+                  <TextBlock Grid.Row="1" Text="Validation" Style="{StaticResource KeyText}" />
+                  <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Step.Certificate.ValidationText}" TextWrapping="Wrap" Margin="0,0,0,6" FontWeight="SemiBold" />
+                  <TextBlock Grid.Row="2" Text="Subject" Style="{StaticResource KeyText}" />
+                  <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Step.Certificate.Subject, Mode=OneWay}" Style="{StaticResource ValueBox}" AutomationProperties.Name="Subject" />
+                  <TextBlock Grid.Row="3" Text="Issuer" Style="{StaticResource KeyText}" />
+                  <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Step.Certificate.Issuer, Mode=OneWay}" Style="{StaticResource ValueBox}" AutomationProperties.Name="Issuer" />
+                  <TextBlock Grid.Row="4" Text="Validity" Style="{StaticResource KeyText}" />
+                  <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding CertificateValidity}" TextWrapping="Wrap" Margin="0,0,0,6" />
+                  <TextBlock Grid.Row="5" Text="Key" Style="{StaticResource KeyText}" />
+                  <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding CertificateKey}" TextWrapping="Wrap" Margin="0,0,0,6" />
+                  <TextBlock Grid.Row="6" Text="Valid for" Style="{StaticResource KeyText}" />
+                  <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding CertificateNames, Mode=OneWay}" Style="{StaticResource ValueBox}" TextWrapping="Wrap" MaxHeight="120" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Subject alternative names" />
+                  <TextBlock Grid.Row="7" Text="SHA-256" Style="{StaticResource KeyText}" />
+                  <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding Step.Certificate.Sha256Fingerprint, Mode=OneWay}" Style="{StaticResource ValueBox}" TextWrapping="Wrap" AutomationProperties.Name="SHA-256 fingerprint" />
+                  <TextBlock Grid.Row="8" Text="Chain" Style="{StaticResource KeyText}" />
+                  <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding CertificateChain, Mode=OneWay}" Style="{StaticResource ValueBox}" TextWrapping="Wrap" AutomationProperties.Name="Certificate chain" />
+                  <TextBlock Grid.Row="9" Text="Chain status" Style="{StaticResource KeyText}" Visibility="{Binding CertificateChainStatus, Converter={StaticResource NullToVisibility}}" />
+                  <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding CertificateChainStatus, Mode=OneWay}" Style="{StaticResource ValueBox}" TextWrapping="Wrap" Foreground="{DynamicResource Brush.Status.Danger}"
+                           Visibility="{Binding CertificateChainStatus, Converter={StaticResource NullToVisibility}}" AutomationProperties.Name="Chain problems" />
+                </Grid>
+              </Border>
+            </Grid>
+          </ScrollViewer>
+        </DockPanel>
+      </TabItem>
+
+      <!-- ═════════ Path MTU ═════════ -->
+      <TabItem Header="Path MTU">
+        <StackPanel Margin="0,12,0,0">
+          <WrapPanel>
+            <TextBox Style="{StaticResource TextBox.Mono}" Width="280" Margin="0,0,12,8" Text="{Binding Target, UpdateSourceTrigger=PropertyChanged}"
+                     ui:Ui.Placeholder="IPv4 host name or address" AutomationProperties.Name="Destination">
+              <TextBox.InputBindings>
+                <KeyBinding Key="Enter" Command="{Binding RunMtuCommand}" />
+              </TextBox.InputBindings>
+            </TextBox>
+            <Button Style="{StaticResource Button.Accent}" Content="Measure" ui:Ui.Icon="{x:Static ui:Glyphs.Play}" Command="{Binding RunMtuCommand}" Margin="0,0,8,8"
+                    Visibility="{Binding RunMtuCommand.IsRunning, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}" />
+            <Button Content="Stop" ui:Ui.Icon="{x:Static ui:Glyphs.Stop}" Command="{Binding RunMtuCancelCommand}" Margin="0,0,8,8"
+                    Visibility="{Binding RunMtuCommand.IsRunning, Converter={StaticResource BoolToVisibility}}" />
+          </WrapPanel>
+          <Border Style="{StaticResource Message}" Visibility="{Binding MtuMessage, Converter={StaticResource NullToVisibility}}">
+            <TextBlock Text="{Binding MtuMessage}" TextWrapping="Wrap" />
+          </Border>
+          <TextBlock Style="{StaticResource Text.Caption}" TextWrapping="Wrap" MaxWidth="820" HorizontalAlignment="Left"
+                     Text="Sends IPv4 echo requests with the don't-fragment flag and searches for the largest size that arrives. A path MTU below 1500 usually means a tunnel, VPN or PPPoE link. Destinations that block ICMP cannot be measured this way. IPv6 is not supported because Windows has no don't-fragment option for ICMPv6 echo." />
+        </StackPanel>
+      </TabItem>
+
+      <!-- ═════════ Routes ═════════ -->
+      <TabItem Header="Routes">
+        <DockPanel Margin="0,12,0,0">
+          <WrapPanel DockPanel.Dock="Top">
+            <TextBox Style="{StaticResource TextBox.Mono}" Width="280" Margin="0,0,12,8" Text="{Binding RouteTarget, UpdateSourceTrigger=PropertyChanged}"
+                     ui:Ui.Placeholder="Which route would reach… (host or IP)" AutomationProperties.Name="Destination for route lookup">
+              <TextBox.InputBindings>
+                <KeyBinding Key="Enter" Command="{Binding LookupRouteCommand}" />
+              </TextBox.InputBindings>
+            </TextBox>
+            <Button Style="{StaticResource Button.Accent}" Content="Find route" ui:Ui.Icon="{x:Static ui:Glyphs.Search}" Command="{Binding LookupRouteCommand}" Margin="0,0,8,8" />
+            <Button Content="Reload table" ui:Ui.Icon="{x:Static ui:Glyphs.Refresh}" Command="{Binding LoadRoutesCommand}" Margin="0,0,8,8" />
+          </WrapPanel>
+          <Border DockPanel.Dock="Top" Style="{StaticResource Message}" Visibility="{Binding RouteMessage, Converter={StaticResource NullToVisibility}}">
+            <TextBlock Text="{Binding RouteMessage}" TextWrapping="Wrap" />
+          </Border>
+          <Border Style="{StaticResource Panel}">
+            <DataGrid ItemsSource="{Binding Routes}" AutomationProperties.Name="Routing table">
+              <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsDefault}" Value="True">
+                      <Setter Property="FontWeight" Value="SemiBold" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </DataGrid.RowStyle>
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Family" Binding="{Binding Family}" Width="64" ElementStyle="{StaticResource Cell.Secondary}" />
+                <DataGridTextColumn Header="Destination" Binding="{Binding Prefix}" Width="240" ElementStyle="{StaticResource Cell.Mono}" />
+                <DataGridTextColumn Header="Gateway" Binding="{Binding NextHop}" Width="200" ElementStyle="{StaticResource Cell.Mono}" />
+                <DataGridTextColumn Header="Interface" Binding="{Binding Interface}" Width="*" />
+                <DataGridTextColumn Header="Route metric" Binding="{Binding RouteMetric}" Width="100" ElementStyle="{StaticResource Cell.Numeric}" HeaderStyle="{StaticResource ColumnHeader.Right}" />
+                <DataGridTextColumn Header="Interface metric" Binding="{Binding InterfaceMetric}" Width="110" ElementStyle="{StaticResource Cell.Numeric}" HeaderStyle="{StaticResource ColumnHeader.Right}" />
+                <DataGridTextColumn Header="Effective" Binding="{Binding EffectiveMetric}" SortMemberPath="SortMetric" Width="80" ElementStyle="{StaticResource Cell.Numeric}" HeaderStyle="{StaticResource ColumnHeader.Right}" />
+                <DataGridTextColumn Header="Origin" Binding="{Binding Origin}" Width="100" ElementStyle="{StaticResource Cell.Secondary}" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </Border>
+        </DockPanel>
+      </TabItem>
+
+      <!-- ═════════ DNS cache ═════════ -->
+      <TabItem Header="DNS cache">
+        <DockPanel Margin="0,12,0,0">
+          <WrapPanel DockPanel.Dock="Top">
+            <Button Style="{StaticResource Button.Accent}" Content="Read cache" ui:Ui.Icon="{x:Static ui:Glyphs.Refresh}" Command="{Binding ReadCacheCommand}" Margin="0,0,12,8" />
+            <TextBox Style="{StaticResource TextBox.Search}" Width="320" Margin="0,0,12,8" Text="{Binding CacheFilter, UpdateSourceTrigger=PropertyChanged, Delay=150}"
+                     ui:Ui.Placeholder="Filter by name or data" AutomationProperties.Name="Filter cache entries" />
+          </WrapPanel>
+          <Border DockPanel.Dock="Top" Style="{StaticResource Message}" Visibility="{Binding CacheMessage, Converter={StaticResource NullToVisibility}}">
+            <TextBlock Text="{Binding CacheMessage}" TextWrapping="Wrap" />
+          </Border>
+          <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,8,0,0"
+                     Text="The Windows DNS client cache (the same data as ipconfig /displaydns). It shows names this computer resolved recently, so it is only read when you ask." />
+          <Border Style="{StaticResource Panel}">
+            <DataGrid ItemsSource="{Binding CacheEntries}" AutomationProperties.Name="DNS cache entries">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Entry" Binding="{Binding Entry}" Width="240" ElementStyle="{StaticResource Cell.Mono}" />
+                <DataGridTextColumn Header="Record name" Binding="{Binding Name}" Width="220" ElementStyle="{StaticResource Cell.Mono}" />
+                <DataGridTextColumn Header="Type" Binding="{Binding TypeText}" Width="70" />
+                <DataGridTextColumn Header="Data" Binding="{Binding Data}" Width="*" ElementStyle="{StaticResource Cell.Mono}" />
+                <DataGridTextColumn Header="TTL (s)" Binding="{Binding TimeToLive}" Width="70" ElementStyle="{StaticResource Cell.Numeric}" HeaderStyle="{StaticResource ColumnHeader.Right}" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="150" ElementStyle="{StaticResource Cell.Secondary}" />
+                <DataGridTextColumn Header="Section" Binding="{Binding Section}" Width="90" ElementStyle="{StaticResource Cell.Secondary}" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </Border>
+        </DockPanel>
+      </TabItem>
+    </TabControl>
+  </DockPanel>
+</UserControl>

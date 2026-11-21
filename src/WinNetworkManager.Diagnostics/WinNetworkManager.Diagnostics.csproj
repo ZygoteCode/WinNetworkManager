@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>WinNetworkManager.Diagnostics</RootNamespace>
+    <Description>Network diagnostics for user-chosen destinations: ping, traceroute, TCP connect, path MTU, DNS, DNS cache, HTTP/TLS.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WinNetworkManager.Core\WinNetworkManager.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Management" />
+  </ItemGroup>
+</Project>

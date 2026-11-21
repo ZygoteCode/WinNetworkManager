@@ -1,0 +1,405 @@
+<UserControl x:Class="WinNetworkManager.App.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:WinNetworkManager.App.ViewModels"
+             xmlns:controls="clr-namespace:WinNetworkManager.UI.Controls;assembly=WinNetworkManager.UI"
+             xmlns:ui="clr-namespace:WinNetworkManager.UI;assembly=WinNetworkManager.UI"
+             mc:Ignorable="d" d:DataContext="{d:DesignInstance vm:SettingsViewModel}"
+             d:DesignWidth="1000" d:DesignHeight="1600">
+  <UserControl.Resources>
+    <Style x:Key="Section" TargetType="Border" BasedOn="{StaticResource Card}">
+      <Setter Property="Margin" Value="0,0,0,16" />
+    </Style>
+    <Style x:Key="SectionTitle" TargetType="TextBlock" BasedOn="{StaticResource Text.Subtitle}">
+      <Setter Property="Margin" Value="0,0,0,12" />
+    </Style>
+    <Style x:Key="Row" TargetType="DockPanel">
+      <Setter Property="Margin" Value="0,0,0,14" />
+      <Setter Property="LastChildFill" Value="True" />
+    </Style>
+    <Style x:Key="RowTitle" TargetType="TextBlock" BasedOn="{StaticResource Text.Body}">
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style x:Key="RowHelp" TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="Margin" Value="0,2,24,0" />
+    </Style>
+    <Style x:Key="RowControl" TargetType="FrameworkElement">
+      <Setter Property="DockPanel.Dock" Value="Right" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="MinWidth" Value="220" />
+    </Style>
+    <Style x:Key="Choice" TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+      <Setter Property="DockPanel.Dock" Value="Right" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Width" Value="300" />
+      <Setter Property="DisplayMemberPath" Value="Label" />
+      <Setter Property="SelectedValuePath" Value="Value" />
+    </Style>
+    <Style x:Key="Toggle" TargetType="CheckBox" BasedOn="{StaticResource Switch}">
+      <Setter Property="DockPanel.Dock" Value="Right" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="Number" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+      <Setter Property="DockPanel.Dock" Value="Right" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Width" Value="100" />
+      <Setter Property="TextAlignment" Value="Right" />
+    </Style>
+  </UserControl.Resources>
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+    <StackPanel Margin="{DynamicResource Pad.Page}" MaxWidth="980" HorizontalAlignment="Left">
+      <Grid Margin="0,0,0,12">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel>
+          <TextBlock Text="Settings" Style="{StaticResource Text.Title}" />
+          <TextBlock Text="Changes are saved and applied immediately." Style="{StaticResource Text.Secondary}" Margin="0,2,0,0" />
+        </StackPanel>
+        <Button Grid.Column="1" Content="Reset to defaults" Command="{Binding ResetToDefaultsCommand}" VerticalAlignment="Bottom" />
+      </Grid>
+
+      <Border Style="{StaticResource InfoBar.Warning}" Margin="0,0,0,16" Visibility="{Binding LoadIssues, Converter={StaticResource NullToVisibility}}">
+        <StackPanel>
+          <TextBlock Text="Some settings in the settings file were invalid and were replaced by safe values:" Style="{StaticResource Text.BodyStrong}" TextWrapping="Wrap" />
+          <TextBlock Text="{Binding LoadIssues}" TextWrapping="Wrap" Margin="0,4,0,0" />
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource InfoBar}" Margin="0,0,0,16" Visibility="{Binding Message, Converter={StaticResource NullToVisibility}}">
+        <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+      </Border>
+
+      <!-- Per-process monitoring -->
+      <Border Style="{StaticResource Section}">
+        <StackPanel>
+          <TextBlock Text="Per-process monitoring" Style="{StaticResource SectionTitle}" />
+          <DockPanel Style="{StaticResource Row}">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+              <Button Style="{StaticResource Button.Accent}" Content="Turn on" ui:Ui.Icon="{x:Static ui:Glyphs.Shield}" Command="{Binding EnableCollectorCommand}"
+                      Visibility="{Binding CollectorRunning, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}" />
+              <Button Content="Turn off" Command="{Binding DisableCollectorCommand}" Visibility="{Binding CollectorRunning, Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
+            <StackPanel>
+              <TextBlock Text="{Binding CollectorState}" Style="{StaticResource Text.BodyStrong}" />
+              <TextBlock Text="{Binding PrivilegeState}" Style="{StaticResource RowHelp}" />
+              <TextBlock Style="{StaticResource RowHelp}"
+                         Text="Per-process traffic comes from kernel event tracing, which Windows reserves for administrators. When this window is not elevated, a small helper process runs elevated after one administrator prompt; the main window always stays unprivileged. Adapters, connections and diagnostics work without it." />
+            </StackPanel>
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <ComboBox Style="{StaticResource Choice}" ItemsSource="{Binding CollectorStartModes}" SelectedValue="{Binding CollectorStartMode}" AutomationProperties.Name="When to start per-process monitoring" />
+            <StackPanel>
+              <TextBlock Text="Start per-process monitoring" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="If WinNetworkManager already runs elevated it starts without asking." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Monitoring -->
+      <Border Style="{StaticResource Section}">
+        <StackPanel>
+          <TextBlock Text="Monitoring" Style="{StaticResource SectionTitle}" />
+          <DockPanel Style="{StaticResource Row}">
+            <ComboBox Style="{StaticResource Choice}" Width="140" ItemsSource="{Binding RefreshIntervals}" SelectedValue="{Binding RefreshIntervalMs}" AutomationProperties.Name="Refresh interval" />
+            <StackPanel>
+              <TextBlock Text="Refresh interval" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="How often the display updates; rates are averaged over this window." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <ComboBox Style="{StaticResource Choice}" Width="140" ItemsSource="{Binding PollIntervals}" SelectedValue="{Binding ConnectionPollIntervalMs}" AutomationProperties.Name="Connection table polling interval" />
+            <StackPanel>
+              <TextBlock Text="Connection table update" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="How often the TCP/UDP tables are read. Connections shorter than this may only be seen through their traffic." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <ComboBox Style="{StaticResource Choice}" Width="140" ItemsSource="{Binding PollIntervals}" SelectedValue="{Binding ProcessPollIntervalMs}" AutomationProperties.Name="Process list polling interval" />
+            <StackPanel>
+              <TextBlock Text="Process list update" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="Process starts and exits are tracked in real time while per-process monitoring is on; this is the fallback scan." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding IncludeLoopbackInTotals}" AutomationProperties.Name="Include loopback traffic in totals" />
+            <StackPanel>
+              <TextBlock Text="Count loopback traffic in totals" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="Traffic between programs on this computer never reaches the network. It is always shown separately; this adds it to application totals and rates." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <TextBox Style="{StaticResource Number}" Text="{Binding ExitedProcessRetentionSeconds}" AutomationProperties.Name="Seconds exited processes stay listed" />
+            <StackPanel>
+              <TextBlock Text="Keep exited processes listed (seconds)" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="Processes that used the network stay visible for this long after they exit." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding ResolveRemoteHostNames}" AutomationProperties.Name="Resolve remote host names" />
+            <StackPanel>
+              <TextBlock Text="Show host names of remote addresses" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="Performs reverse DNS lookups in the background (your DNS server sees these queries). Results are cached for the session." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Appearance -->
+      <Border Style="{StaticResource Section}">
+        <StackPanel>
+          <TextBlock Text="Appearance" Style="{StaticResource SectionTitle}" />
+          <DockPanel Style="{StaticResource Row}">
+            <ComboBox Style="{StaticResource Choice}" ItemsSource="{Binding Themes}" SelectedValue="{Binding Theme}" AutomationProperties.Name="Theme" />
+            <TextBlock Text="Theme" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+              <CheckBox Content="Windows accent" IsChecked="{Binding UseSystemAccent}" Margin="0,0,12,0" />
+              <TextBox Text="{Binding AccentColor}" Width="100" IsEnabled="{Binding UseSystemAccent, Converter={StaticResource InverseBool}}" AutomationProperties.Name="Accent colour, #RRGGBB" ToolTip="#RRGGBB" />
+            </StackPanel>
+            <StackPanel>
+              <TextBlock Text="Accent colour" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="Contrast is adjusted automatically so text stays readable." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <ComboBox Style="{StaticResource Choice}" Width="420" ItemsSource="{Binding UnitSystems}" SelectedValue="{Binding Units}" AutomationProperties.Name="Units" />
+            <TextBlock Text="Units" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <ComboBox Style="{StaticResource Choice}" Width="160" ItemsSource="{Binding Densities}" SelectedValue="{Binding Density}" AutomationProperties.Name="Table density" />
+            <TextBlock Text="Table rows" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <ComboBox Style="{StaticResource Choice}" Width="220" ItemsSource="{Binding MotionChoices}" SelectedValue="{Binding Motion}" AutomationProperties.Name="Animations" />
+            <TextBlock Text="Animations" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+              <Slider Minimum="0.8" Maximum="2" SmallChange="0.05" LargeChange="0.1" TickFrequency="0.1" IsSnapToTickEnabled="True" Width="220"
+                      Value="{Binding TextScale, Delay=300}" AutomationProperties.Name="Text size" />
+              <TextBlock Text="{Binding TextScaleText}" Width="52" TextAlignment="Right" VerticalAlignment="Center" />
+            </StackPanel>
+            <StackPanel>
+              <TextBlock Text="Text size" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="Applied on top of the Windows text size setting." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Window -->
+      <Border Style="{StaticResource Section}">
+        <StackPanel>
+          <TextBlock Text="Window and startup" Style="{StaticResource SectionTitle}" />
+          <DockPanel Style="{StaticResource Row}">
+            <ComboBox Style="{StaticResource Choice}" ItemsSource="{Binding CloseBehaviors}" SelectedValue="{Binding CloseBehavior}" AutomationProperties.Name="Close button" />
+            <StackPanel>
+              <TextBlock Text="Close button" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="In the notification area, right-click the icon to open or exit." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding StartWithWindows}" AutomationProperties.Name="Start with Windows" />
+            <StackPanel>
+              <TextBlock Text="Start when I sign in to Windows" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="Adds WinNetworkManager to your startup apps (current user only). Off unless you turn it on." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding StartMinimized}" AutomationProperties.Name="Start minimized" />
+            <StackPanel>
+              <TextBlock Text="Start in the notification area" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="When started with Windows and the close button keeps monitoring, start without opening the window." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Processes -->
+      <Border Style="{StaticResource Section}">
+        <StackPanel>
+          <TextBlock Text="Process list" Style="{StaticResource SectionTitle}" />
+          <DockPanel Style="{StaticResource Row}">
+            <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding HideSystemProcesses}" AutomationProperties.Name="Hide system processes" />
+            <TextBlock Text="Hide system processes (kernel and system accounts)" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding ShowIdleProcesses}" AutomationProperties.Name="Show processes without network activity" />
+            <TextBlock Text="Show processes that have not used the network" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding GroupByApplication}" AutomationProperties.Name="Group by application" />
+            <TextBlock Text="Group processes of the same application" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <TextBox DockPanel.Dock="Right" Width="300" Height="72" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                     Text="{Binding HiddenProcessNames}" AutomationProperties.Name="Hidden process names" />
+            <StackPanel>
+              <TextBlock Text="Always hide these processes" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="Executable names, one per line (for example svchost.exe). Their traffic still counts in totals." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- History -->
+      <Border Style="{StaticResource Section}">
+        <StackPanel>
+          <TextBlock Text="History and privacy" Style="{StaticResource SectionTitle}" />
+          <DockPanel Style="{StaticResource Row}">
+            <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding PersistHistory}" AutomationProperties.Name="Keep traffic history on this PC" />
+            <StackPanel>
+              <TextBlock Text="Keep traffic history on this PC" Style="{StaticResource RowTitle}" />
+              <TextBlock Style="{StaticResource RowHelp}"
+                         Text="Stores per-second totals for 24 hours, per-minute totals, per-application and per-adapter byte counts in a local database. Remote addresses, host names, DNS queries and packet contents are never stored. Nothing leaves this computer." />
+            </StackPanel>
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <TextBox Style="{StaticResource Number}" Text="{Binding RetentionDays}" AutomationProperties.Name="History retention in days" />
+            <StackPanel>
+              <TextBlock Text="Keep history for (days)" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="Older data is deleted automatically. Per-second data is kept for 24 hours." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <TextBox Style="{StaticResource Number}" Text="{Binding InMemoryMinutes}" AutomationProperties.Name="Minutes of per-second history in memory" />
+            <StackPanel>
+              <TextBlock Text="Per-second history in memory (minutes)" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="Used for the live charts and short history ranges, also when nothing is stored on disk." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+              <Button Content="Open folder" ui:Ui.Icon="{x:Static ui:Glyphs.FolderOpen}" Command="{Binding OpenDataFolderCommand}" Margin="0,0,8,0" />
+              <Button Content="Clear history" ui:Ui.Icon="{x:Static ui:Glyphs.Delete}" Command="{Binding ClearHistoryCommand}" />
+            </StackPanel>
+            <StackPanel>
+              <TextBlock Text="{Binding HistoryState}" Style="{StaticResource RowTitle}" />
+              <TextBox Text="{Binding HistoryDatabase, Mode=OneWay}" Style="{StaticResource TextBox.Value}" Margin="0,2,24,0" AutomationProperties.Name="History database location" />
+            </StackPanel>
+          </DockPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Notifications -->
+      <Border Style="{StaticResource Section}">
+        <StackPanel>
+          <TextBlock Text="Notifications" Style="{StaticResource SectionTitle}" />
+          <DockPanel Style="{StaticResource Row}">
+            <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding NotificationsEnabled}" AutomationProperties.Name="Notifications" />
+            <StackPanel>
+              <TextBlock Text="Show notifications" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="Shown by the notification-area icon while WinNetworkManager runs." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+          <StackPanel IsEnabled="{Binding NotificationsEnabled}">
+            <DockPanel Style="{StaticResource Row}">
+              <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding NotifyCollectorFailure}" AutomationProperties.Name="Notify when per-process monitoring stops" />
+              <TextBlock Text="Per-process monitoring stopped unexpectedly" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+            </DockPanel>
+            <DockPanel Style="{StaticResource Row}">
+              <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding NotifyConnectivity}" AutomationProperties.Name="Notify on connectivity changes" />
+              <TextBlock Text="Internet connectivity lost or restored" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+            </DockPanel>
+            <DockPanel Style="{StaticResource Row}">
+              <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding NotifyNewApplications}" AutomationProperties.Name="Notify about new network applications" />
+              <TextBlock Text="An application uses the network for the first time in this session" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+            </DockPanel>
+            <DockPanel Style="{StaticResource Row}">
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding NotifyRateThreshold}" Margin="0,0,12,0" AutomationProperties.Name="Rate threshold notification" />
+                <TextBox Text="{Binding RateThresholdMegabytes}" Width="70" TextAlignment="Right" AutomationProperties.Name="Threshold in megabytes per second" />
+                <TextBlock Text="MB/s for" Margin="6,0" VerticalAlignment="Center" />
+                <TextBox Text="{Binding RateThresholdSeconds}" Width="50" TextAlignment="Right" AutomationProperties.Name="Seconds above threshold" />
+                <TextBlock Text="s" Margin="6,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+              <StackPanel>
+                <TextBlock Text="An application transfers a lot of data" Style="{StaticResource RowTitle}" />
+                <TextBlock Text="Download or upload above the threshold (1 MB = 1,000,000 bytes), sustained for the given time." Style="{StaticResource RowHelp}" />
+              </StackPanel>
+            </DockPanel>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Diagnostics and export -->
+      <Border Style="{StaticResource Section}">
+        <StackPanel>
+          <TextBlock Text="Diagnostics and export" Style="{StaticResource SectionTitle}" />
+          <DockPanel Style="{StaticResource Row}">
+            <TextBox Style="{StaticResource Number}" Text="{Binding DiagnosticsTimeoutMs}" AutomationProperties.Name="Diagnostics timeout in milliseconds" />
+            <TextBlock Text="Timeout for each test step (ms)" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <TextBox Style="{StaticResource Number}" Text="{Binding PingCount}" AutomationProperties.Name="Default ping count" />
+            <TextBlock Text="Ping: requests per run" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <TextBox Style="{StaticResource Number}" Text="{Binding PingIntervalMs}" AutomationProperties.Name="Ping interval in milliseconds" />
+            <TextBlock Text="Ping: interval (ms)" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <TextBox Style="{StaticResource Number}" Text="{Binding TracerouteMaxHops}" AutomationProperties.Name="Traceroute maximum hops" />
+            <TextBlock Text="Traceroute: maximum hops" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding HttpFollowRedirects}" AutomationProperties.Name="Follow HTTP redirects by default" />
+            <TextBlock Text="HTTP probe: follow redirects by default" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <ComboBox Style="{StaticResource Choice}" Width="420" ItemsSource="{Binding Delimiters}" SelectedValue="{Binding CsvDelimiter}" AutomationProperties.Name="CSV delimiter" />
+            <StackPanel>
+              <TextBlock Text="CSV separator" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="Exports always use raw numbers, invariant formatting and UTC timestamps, with a header describing sources and units." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Logging -->
+      <Border Style="{StaticResource Section}">
+        <StackPanel>
+          <TextBlock Text="Log file" Style="{StaticResource SectionTitle}" />
+          <DockPanel Style="{StaticResource Row}">
+            <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding LoggingEnabled}" AutomationProperties.Name="Write a log file" />
+            <StackPanel>
+              <TextBlock Text="Write a log file" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="Errors and events of WinNetworkManager itself (no traffic data). Useful when reporting a problem." Style="{StaticResource RowHelp}" />
+            </StackPanel>
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <ComboBox Style="{StaticResource Choice}" Width="200" ItemsSource="{Binding LogLevels}" SelectedValue="{Binding LogLevel}" IsEnabled="{Binding LoggingEnabled}" AutomationProperties.Name="Log level" />
+            <TextBlock Text="Detail" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <TextBox Style="{StaticResource Number}" Text="{Binding RetainedLogFiles}" AutomationProperties.Name="Log files kept" />
+            <TextBlock Text="Daily log files kept" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+          </DockPanel>
+          <DockPanel Style="{StaticResource Row}">
+            <Button DockPanel.Dock="Right" Content="Open log folder" ui:Ui.Icon="{x:Static ui:Glyphs.FolderOpen}" Command="{Binding OpenLogFolderCommand}" VerticalAlignment="Center" />
+            <TextBox Text="{Binding LogDirectory, Mode=OneWay}" Style="{StaticResource TextBox.Value}" Margin="0,0,24,0" VerticalAlignment="Center" AutomationProperties.Name="Log folder" />
+          </DockPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- About -->
+      <Border Style="{StaticResource Section}">
+        <StackPanel>
+          <TextBlock Text="About" Style="{StaticResource SectionTitle}" />
+          <TextBlock Text="{Binding VersionText}" Style="{StaticResource Text.Body}" />
+          <TextBlock Text="{Binding OsText}" Style="{StaticResource Text.Secondary}" Margin="0,2,0,8" />
+          <TextBox Text="{Binding DataDirectory, Mode=OneWay}" Style="{StaticResource TextBox.Value}" AutomationProperties.Name="Data folder" />
+          <TextBlock Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,8,0,0"
+                     Text="WinNetworkManager does not connect to the Internet by itself: no telemetry, no update checks, no geolocation services. Network activity happens only for diagnostics you start, reverse DNS lookups you enable, and online certificate checks you request." />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

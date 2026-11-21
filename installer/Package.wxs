@@ -1,0 +1,60 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <!--
+    Per-machine installation in Program Files. Upgrades replace the previous version (major upgrade); uninstalling
+    removes every installed file, the Start menu shortcut and the start-with-Windows entry of the user who uninstalls.
+    Settings, history and logs in %LOCALAPPDATA%\WinNetworkManager belong to the user and are kept.
+  -->
+  <Package Name="WinNetworkManager"
+           Manufacturer="ZygoteCode"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="5D2B6E6B-7A9E-4F51-9C2B-3B8E5C0D4A17"
+           Scope="perMachine"
+           Compressed="yes">
+    <SummaryInformation Description="WinNetworkManager - per-process network monitoring and diagnostics for Windows" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of WinNetworkManager is already installed." AllowSameVersionUpgrades="yes" />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="AppIcon.ico" SourceFile="$(var.AppIcon)" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/ZygoteCode/WinNetworkManager" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/ZygoteCode/WinNetworkManager" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="WinNetworkManager" />
+    </StandardDirectory>
+
+    <Feature Id="Main" Title="WinNetworkManager" Level="1">
+      <ComponentGroupRef Id="ApplicationFiles" />
+      <ComponentRef Id="StartMenuShortcut" />
+    </Feature>
+
+    <!--
+      On uninstall (not on upgrade), before files are removed: run WinNetworkManager.exe with its cleanup option, as the user, to
+      delete the start-with-Windows entry it may have written under HKCU. Failure is ignored.
+    -->
+    <CustomAction Id="CleanupUserState" Directory="INSTALLFOLDER" ExeCommand="&quot;[INSTALLFOLDER]WinNetworkManager.exe&quot; --cleanup" Execute="immediate" Return="ignore" />
+    <InstallExecuteSequence>
+      <Custom Action="CleanupUserState" Before="InstallValidate" Condition="REMOVE~=&quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
+    </InstallExecuteSequence>
+  </Package>
+
+  <Fragment>
+    <ComponentGroup Id="ApplicationFiles" Directory="INSTALLFOLDER">
+      <Files Include="$(var.PublishDir)**" />
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Component Id="StartMenuShortcut" Guid="8C0B5B8E-3C55-4A43-9F2E-6D2A7E1C9B41">
+        <Shortcut Id="ApplicationShortcut"
+                  Name="WinNetworkManager"
+                  Description="Per-process network monitoring and diagnostics"
+                  Target="[INSTALLFOLDER]WinNetworkManager.exe"
+                  WorkingDirectory="INSTALLFOLDER" />
+        <!-- Shortcut components need a per-user key path (ICE38/ICE43); it is removed again on uninstall. -->
+        <RegistryValue Root="HKCU" Key="Software\ZygoteCode\WinNetworkManager" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+  </Fragment>
+</Wix>

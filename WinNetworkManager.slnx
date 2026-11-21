@@ -1,9 +1,37 @@
 <Solution>
   <Configurations>
-    <Platform Name="Any CPU" />
-    <Platform Name="x64" />
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
   </Configurations>
-  <Project Path="WinNetworkManager.csproj">
-    <Platform Solution="*|x64" Project="x64" />
-  </Project>
+  <Folder Name="/src/">
+    <Project Path="src/WinNetworkManager.Core/WinNetworkManager.Core.csproj" />
+    <Project Path="src/WinNetworkManager.Platform.Windows/WinNetworkManager.Platform.Windows.csproj" />
+    <Project Path="src/WinNetworkManager.Telemetry/WinNetworkManager.Telemetry.csproj" />
+    <Project Path="src/WinNetworkManager.Infrastructure/WinNetworkManager.Infrastructure.csproj" />
+    <Project Path="src/WinNetworkManager.Diagnostics/WinNetworkManager.Diagnostics.csproj" />
+    <Project Path="src/WinNetworkManager.Engine/WinNetworkManager.Engine.csproj" />
+    <Project Path="src/WinNetworkManager.UI/WinNetworkManager.UI.csproj" />
+    <Project Path="src/WinNetworkManager.Collector/WinNetworkManager.Collector.csproj" />
+    <Project Path="src/WinNetworkManager.App/WinNetworkManager.App.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/WinNetworkManager.Core.Tests/WinNetworkManager.Core.Tests.csproj" />
+    <Project Path="tests/WinNetworkManager.Platform.Tests/WinNetworkManager.Platform.Tests.csproj" />
+    <Project Path="tests/WinNetworkManager.Telemetry.Tests/WinNetworkManager.Telemetry.Tests.csproj" />
+    <Project Path="tests/WinNetworkManager.Infrastructure.Tests/WinNetworkManager.Infrastructure.Tests.csproj" />
+    <Project Path="tests/WinNetworkManager.Engine.Tests/WinNetworkManager.Engine.Tests.csproj" />
+    <Project Path="tests/WinNetworkManager.Diagnostics.Tests/WinNetworkManager.Diagnostics.Tests.csproj" />
+    <Project Path="tests/WinNetworkManager.App.Tests/WinNetworkManager.App.Tests.csproj" />
+  </Folder>
+  <Folder Name="/docs/">
+    <File Path="README.md" />
+    <File Path="docs/ARCHITECTURE.md" />
+    <File Path="docs/AUDIT.md" />
+    <File Path="docs/DATA-SOURCES.md" />
+    <File Path="docs/DEVELOPMENT.md" />
+    <File Path="docs/INSTALL.md" />
+    <File Path="docs/PERMISSIONS.md" />
+    <File Path="docs/TROUBLESHOOTING.md" />
+    <File Path="docs/USER-GUIDE.md" />
+  </Folder>
 </Solution>

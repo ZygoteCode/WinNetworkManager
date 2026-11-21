@@ -1,4 +1,22 @@
-/bin
-/obj
-/packages
-/.vs
+# Build output
+bin/
+obj/
+artifacts/
+publish/
+TestResults/
+*.binlog
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Packages
+packages/
+*.nupkg
+
+# Local runtime data written by the app during development
+*.db-shm
+*.db-wal
