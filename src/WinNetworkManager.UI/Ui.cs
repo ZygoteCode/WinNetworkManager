@@ -95,6 +95,7 @@ public static class Ui
 public static class Glyphs
 {
 #pragma warning disable CS1591 // Names are self-describing.
+    public const string AppDefault = "";
     public const string Menu = "";
     public const string Dashboard = "";
     public const string Processes = "";

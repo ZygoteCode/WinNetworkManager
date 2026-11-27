@@ -167,7 +167,7 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                       </Grid.RowDefinitions>
-                      <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,10,0" VerticalAlignment="Center" Grid.RowSpan="2" />
+                      <controls:AppIcon Source="{Binding Icon}" Margin="0,0,10,0" VerticalAlignment="Center" Grid.RowSpan="2" />
                       <TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource Text.Body}" Foreground="{DynamicResource Brush.Text.Primary}" />
                       <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="8,0,0,0">
                         <TextBlock Text="{Binding Down}" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Data.Download}" Typography.NumeralAlignment="Tabular" />

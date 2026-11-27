@@ -30,7 +30,7 @@
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
       <Border Width="48" Height="48" CornerRadius="10" Background="{DynamicResource Brush.Bg.Surface}" BorderBrush="{DynamicResource Brush.Border.Subtle}" BorderThickness="1" Margin="0,0,16,0" VerticalAlignment="Top">
-        <Image Source="{Binding Icon}" Width="32" Height="32" RenderOptions.BitmapScalingMode="HighQuality" />
+        <controls:AppIcon Source="{Binding Icon}" Width="32" Height="32" />
       </Border>
       <StackPanel Grid.Column="1">
         <StackPanel Orientation="Horizontal">
