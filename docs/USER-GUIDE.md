@@ -47,7 +47,8 @@ Quotes allow spaces: `path:"Program Files"`.
 ## Process details
 
 Opened from any process reference (Processes, Connections, Dashboard, notifications). Header: icon, name, PID,
-state, path, signature. Tiles: download, upload, CPU, memory, handles. Tabs:
+state, path, signature, SHA-256 of the executable (computed locally when the page opens; **Verify…** opens it in
+Diagnostics › File hash to compare with a published checksum). Tiles: download, upload, CPU, memory, handles. Tabs:
 
 - **Network**: current rates and totals split TCP/UDP, peaks, averages, monitored time, loopback, retransmissions,
   sockets, remote addresses, interfaces used, last activity, and a 5-minute chart (download/upload or TCP/UDP).
@@ -96,6 +97,7 @@ defaults are in Settings → Diagnostics.
 | **Path MTU** | Largest IPv4 packet that reaches the destination unfragmented (echo with don't-fragment, binary search) | IPv4 only (Windows has no don't-fragment option for ICMPv6 echo); needs ICMP replies |
 | **Routes** | IPv4 and IPv6 routing table with metrics; **Find route** shows the interface, gateway and source address Windows would use for a destination | Computed from the table, no packets sent |
 | **DNS cache** | The Windows DNS client cache (like `ipconfig /displaydns`), with filter | Read only when you click **Read cache**; never stored |
+| **File hash** | SHA-256, SHA-512, SHA-1 and MD5 of any file in one read (type the path, **Browse…** or drop the file on the page); paste a published checksum to compare — the algorithm is recognised from its length and `sha256sum` output, `SHA256:` prefixes, upper case and separators are accepted | Computed locally, nothing is uploaded or looked up; SHA-1 and MD5 only detect accidental corruption, not tampering |
 
 ## History
 

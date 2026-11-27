@@ -55,6 +55,16 @@
           </controls:IconText>
           <TextBlock Text="{Binding SignatureText}" Style="{StaticResource Text.Caption}" />
         </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+          <TextBlock Text="SHA-256" Style="{StaticResource Text.Label}" VerticalAlignment="Center" Margin="0,0,8,0" />
+          <TextBox Text="{Binding Sha256Text, Mode=OneWay}" Style="{StaticResource TextBox.Value}" FontFamily="{DynamicResource Font.Mono}"
+                   FontSize="{DynamicResource FontSize.Caption}" Foreground="{DynamicResource Brush.Text.Secondary}" VerticalAlignment="Center"
+                   AutomationProperties.Name="SHA-256 of the executable" ToolTip="Computed locally from the executable file; nothing is looked up online." />
+          <Button Style="{StaticResource Button.Icon}" ui:Ui.Icon="{x:Static ui:Glyphs.Copy}" Command="{Binding CopySha256Command}" Width="26" Height="26" Margin="4,0,0,0"
+                  ToolTip="Copy SHA-256" AutomationProperties.Name="Copy SHA-256" />
+          <Button Style="{StaticResource Button.Link}" Content="Verify…" Command="{Binding VerifyHashCommand}" VerticalAlignment="Center" Margin="8,0,0,0"
+                  ToolTip="Open the file hash checker to compare with a published checksum" />
+        </StackPanel>
       </StackPanel>
       <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
         <Button Content="Connections" ui:Ui.Icon="{x:Static ui:Glyphs.Connections}" Command="{Binding ShowConnectionsCommand}" Margin="0,0,8,0" />

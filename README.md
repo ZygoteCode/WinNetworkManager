@@ -19,7 +19,8 @@ guessed. Version 2 is a complete rewrite of the original WinForms tool (see [doc
   services, command line, CPU and memory, network figures, sockets and a 5-minute chart.
 - **Diagnostics**: ping (loss, min/avg/max, jitter), traceroute, TCP port test, DNS (Windows resolver or direct
   queries to any server, all common record types, TCP fallback), HTTP/TLS probe (DNS / connect / TLS / server timings,
-  TLS version, cipher, certificate chain and validity), path MTU, routing table and route lookup, DNS client cache.
+  TLS version, cipher, certificate chain and validity), path MTU, routing table and route lookup, DNS client cache, file checksums (SHA-256/512, SHA-1, MD5) with
+  comparison against a published value.
 - **History**: 60 seconds to 30 days and custom ranges; adapters vs applications, TCP vs UDP, per application, per
   adapter; intervals that were not measured are gaps, never zeros.
 - **Export** to CSV and JSON with raw values, UTC timestamps and a header that documents sources and units.

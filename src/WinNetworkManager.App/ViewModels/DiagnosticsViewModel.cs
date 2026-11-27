@@ -43,6 +43,24 @@ public enum DiagnosticTool
 
     /// <summary>DNS client cache.</summary>
     DnsCache,
+
+    /// <summary>File checksum calculator and checker.</summary>
+    FileHash,
+}
+
+/// <summary>Computed checksum row.</summary>
+/// <param name="Value">Digest.</param>
+/// <param name="IsMatch">True when this digest equals the expected value.</param>
+public sealed record HashRow(FileHashValue Value, bool IsMatch)
+{
+    /// <summary>Algorithm name.</summary>
+    public string Name => Value.Name;
+
+    /// <summary>Digest (lowercase hex).</summary>
+    public string Hex => Value.Hex;
+
+    /// <summary>Note shown next to weak algorithms.</summary>
+    public string? Note => Value.IsWeak ? "Weak: only for old published checksums" : null;
 }
 
 /// <summary>How a DNS lookup is performed.</summary>
@@ -174,7 +192,7 @@ public sealed partial class DiagnosticsViewModel : PageViewModel
     public int ToolIndex
     {
         get => (int)Tool;
-        set => Tool = (DiagnosticTool)Math.Clamp(value, 0, (int)DiagnosticTool.DnsCache);
+        set => Tool = (DiagnosticTool)Math.Clamp(value, 0, (int)DiagnosticTool.FileHash);
     }
 
     /// <summary>Destination for ping, traceroute, TCP and path MTU.</summary>
@@ -330,6 +348,34 @@ public sealed partial class DiagnosticsViewModel : PageViewModel
     /// <summary>Status or error.</summary>
     [ObservableProperty] public partial string? CacheMessage { get; set; }
 
+    // ── File hash ─────────────────────────────────────────────────────────────────────────────────
+
+    private FileHashResult? _hashResult;
+
+    /// <summary>File to hash.</summary>
+    [ObservableProperty] public partial string HashPath { get; set; } = string.Empty;
+
+    /// <summary>Expected checksum pasted by the user (any supported algorithm, detected from the length).</summary>
+    [ObservableProperty] public partial string HashExpected { get; set; } = string.Empty;
+
+    /// <summary>Computed digests.</summary>
+    public ObservableCollection<HashRow> HashRows { get; } = [];
+
+    /// <summary>Progress, 0 to 1.</summary>
+    [ObservableProperty] public partial double HashProgress { get; set; }
+
+    /// <summary>File size and timing of the last computation.</summary>
+    [ObservableProperty] public partial string? HashSummary { get; set; }
+
+    /// <summary>Status or error.</summary>
+    [ObservableProperty] public partial string? HashMessage { get; set; }
+
+    /// <summary>Outcome of the comparison with <see cref="HashExpected"/>.</summary>
+    [ObservableProperty] public partial HashMatchKind HashVerdict { get; set; }
+
+    /// <summary>Explanation of <see cref="HashVerdict"/>; null when there is nothing to say.</summary>
+    [ObservableProperty] public partial string? HashVerdictText { get; set; }
+
     private TimeSpan Timeout => TimeSpan.FromMilliseconds(Math.Clamp(_settings.Current.Diagnostics.TimeoutMs, 200, 60_000));
 
     /// <summary>Opens a tool for a destination chosen elsewhere (e.g. a connection's context menu) and starts it.</summary>
@@ -348,6 +394,12 @@ public sealed partial class DiagnosticsViewModel : PageViewModel
                 Target = target;
                 TcpPort = port == 0 ? TcpPort : port;
                 StartIfIdle(RunTcpCommand);
+                break;
+            case "hash":
+                Tool = DiagnosticTool.FileHash;
+                HashPath = target;
+                HashExpected = string.Empty; // a value left from another file would report a false mismatch
+                StartIfIdle(RunHashCommand);
                 break;
             case "dns":
                 Tool = DiagnosticTool.Dns;
@@ -383,6 +435,99 @@ public sealed partial class DiagnosticsViewModel : PageViewModel
     }
 
     partial void OnCacheFilterChanged(string value) => ApplyCacheFilter();
+
+    partial void OnHashExpectedChanged(string value) => UpdateHashVerdict();
+
+    partial void OnHashPathChanged(string value)
+    {
+        if (_hashResult is not null && !string.Equals(_hashResult.Path, value.Trim().Trim('"'), StringComparison.OrdinalIgnoreCase))
+        {
+            _hashResult = null;
+            HashRows.Clear();
+            HashSummary = null;
+            HashProgress = 0;
+            UpdateHashVerdict();
+        }
+    }
+
+    /// <summary>Uses a file dropped on the page and computes its checksums.</summary>
+    public void HashDroppedFile(string path)
+    {
+        Tool = DiagnosticTool.FileHash;
+        HashPath = path;
+        StartIfIdle(RunHashCommand);
+    }
+
+    [RelayCommand]
+    private void BrowseHashFile()
+    {
+        if (ShellActions.AskOpenPath("Choose a file to hash", HashPath) is { } path)
+        {
+            HashPath = path;
+            StartIfIdle(RunHashCommand);
+        }
+    }
+
+    [RelayCommand]
+    private static void CopyHash(HashRow? row) => ShellActions.Copy(row?.Hex);
+
+    [RelayCommand(IncludeCancelCommand = true)]
+    private async Task RunHashAsync(CancellationToken token)
+    {
+        _hashResult = null;
+        HashRows.Clear();
+        HashSummary = null;
+        HashProgress = 0;
+        HashMessage = null;
+        UpdateHashVerdict();
+        if (string.IsNullOrWhiteSpace(HashPath))
+        {
+            HashMessage = "Choose a file first: type its path, browse for it or drop it on this page.";
+            return;
+        }
+
+        try
+        {
+            var progress = new Progress<double>(p => HashProgress = p);
+            var result = await Task.Run(() => FileHashTool.ComputeAsync(HashPath, FileHashTool.All, progress, token), token).ConfigureAwait(true);
+            _hashResult = result;
+            HashProgress = 1;
+            HashSummary = $"{Fmt.Bytes(result.Length)} ({result.Length.ToString("N0", CultureInfo.CurrentCulture)} bytes) · read in {Ms(result.ElapsedMs)}";
+            UpdateHashVerdict();
+        }
+        catch (OperationCanceledException)
+        {
+            HashMessage = "Stopped.";
+        }
+        catch (DiagnosticsException ex)
+        {
+            HashMessage = ex.Message;
+        }
+    }
+
+    private void UpdateHashVerdict()
+    {
+        var computed = _hashResult?.Hashes ?? [];
+        var match = FileHashTool.Compare(HashExpected, computed);
+        HashVerdict = match.Kind;
+        string name = match.Algorithm is { } a ? FileHashTool.DisplayName(a) : string.Empty;
+        HashVerdictText = match.Kind switch
+        {
+            HashMatchKind.Invalid => "The expected value is not a SHA-256, SHA-512, SHA-1 or MD5 checksum (hexadecimal digits only).",
+            HashMatchKind.NotComputed when _hashResult is null => $"{name} checksum recognised. Compute the file's checksums to compare.",
+            HashMatchKind.NotComputed => $"The {name} checksum was not computed.",
+            HashMatchKind.Match => $"Match: the file's {name} checksum equals the expected value." +
+                (match.Algorithm is FileHashAlgorithm.Sha1 or FileHashAlgorithm.Md5 ? $" {name} only detects accidental corruption, not deliberate tampering." : string.Empty),
+            HashMatchKind.Mismatch => $"Mismatch: the file's {name} checksum differs from the expected value. The file is not the published one (corrupted, incomplete or modified).",
+            _ => null,
+        };
+
+        HashRows.Clear();
+        foreach (var value in computed)
+        {
+            HashRows.Add(new HashRow(value, match.Kind == HashMatchKind.Match && match.Algorithm == value.Algorithm));
+        }
+    }
 
     /// <inheritdoc />
     protected override void OnActivated()

@@ -93,7 +93,45 @@ public sealed partial class ProcessInspectorViewModel : PageViewModel
     [ObservableProperty] public partial Core.Units.DataUnitSystem Units { get; set; }
     [ObservableProperty] public partial string SocketSummary { get; set; } = string.Empty;
 
+    /// <summary>SHA-256 of the executable, or why it is not available.</summary>
+    [ObservableProperty] public partial string Sha256Text { get; set; } = "Not available";
+
+    /// <summary>True when <see cref="Sha256Text"/> holds a digest.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(CopySha256Command))]
+    public partial bool HasSha256 { get; set; }
+
+    private string? _hashedPath;
+
     partial void OnStackProtocolsChanged(bool value) => _lastChart = default;
+
+    [RelayCommand(CanExecute = nameof(HasSha256))]
+    private void CopySha256() => ShellActions.Copy(Sha256Text);
+
+    [RelayCommand]
+    private void VerifyHash()
+    {
+        if (_view?.Path.Value is { } path && _shell().Pages.TryGetValue(PageKind.Diagnostics, out var page) && page is DiagnosticsViewModel diagnostics)
+        {
+            diagnostics.Prefill("hash", path, 0);
+            _shell().Navigate(PageKind.Diagnostics);
+        }
+    }
+
+    private async Task ComputeSha256Async(string path)
+    {
+        Sha256Text = "Computing…";
+        try
+        {
+            var result = await Task.Run(() => Diagnostics.FileHashTool.ComputeAsync(path, [Diagnostics.FileHashAlgorithm.Sha256], null, CancellationToken.None)).ConfigureAwait(true);
+            Sha256Text = result.Hashes[0].Hex;
+            HasSha256 = true;
+        }
+        catch (Diagnostics.DiagnosticsException ex)
+        {
+            Sha256Text = ex.Message;
+        }
+    }
 
     [RelayCommand]
     private void CopyPath() => ShellActions.Copy(_view?.Path.Value);
@@ -154,6 +192,16 @@ public sealed partial class ProcessInspectorViewModel : PageViewModel
         if (Icon is null && view.Path.HasValue)
         {
             Icon = _icons.Get(view.Path.Value, image => Icon = image);
+        }
+
+        if (view.Path.HasValue && _hashedPath is null)
+        {
+            _hashedPath = view.Path.Value!;
+            _ = ComputeSha256Async(_hashedPath);
+        }
+        else if (!view.Path.HasValue && _hashedPath is null)
+        {
+            Sha256Text = "Not available: " + Probe<string>.Explain(view.Path.Status);
         }
 
         bool traffic = view.Traffic is TrafficAvailability.Available or TrafficAvailability.Partial;
