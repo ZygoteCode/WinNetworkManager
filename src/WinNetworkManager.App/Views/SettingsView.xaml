@@ -160,6 +160,8 @@
           </DockPanel>
           <DockPanel Style="{StaticResource Row}">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+              <Border Width="24" Height="24" CornerRadius="12" Margin="0,0,14,0" Background="{DynamicResource Brush.Accent}"
+                      BorderBrush="{DynamicResource Brush.Border.Strong}" BorderThickness="1" ToolTip="Current accent colour" />
               <CheckBox Content="Windows accent" IsChecked="{Binding UseSystemAccent}" Margin="0,0,12,0" />
               <TextBox Text="{Binding AccentColor}" Width="100" IsEnabled="{Binding UseSystemAccent, Converter={StaticResource InverseBool}}" AutomationProperties.Name="Accent colour, #RRGGBB" ToolTip="#RRGGBB" />
             </StackPanel>
@@ -169,8 +171,11 @@
             </StackPanel>
           </DockPanel>
           <DockPanel Style="{StaticResource Row}">
-            <ComboBox Style="{StaticResource Choice}" Width="420" ItemsSource="{Binding UnitSystems}" SelectedValue="{Binding Units}" AutomationProperties.Name="Units" />
-            <TextBlock Text="Units" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+            <ComboBox Style="{StaticResource Choice}" ItemsSource="{Binding UnitSystems}" SelectedValue="{Binding Units}" AutomationProperties.Name="Units" />
+            <StackPanel>
+              <TextBlock Text="Units" Style="{StaticResource RowTitle}" />
+              <TextBlock Text="Decimal bytes match Task Manager rates, binary bytes match File Explorer sizes, bits match link speeds." Style="{StaticResource RowHelp}" />
+            </StackPanel>
           </DockPanel>
           <DockPanel Style="{StaticResource Row}">
             <ComboBox Style="{StaticResource Choice}" Width="160" ItemsSource="{Binding Densities}" SelectedValue="{Binding Density}" AutomationProperties.Name="Table density" />

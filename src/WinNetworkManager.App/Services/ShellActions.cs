@@ -52,6 +52,25 @@ public static class ShellActions
         Process.Start(new ProcessStartInfo("explorer.exe", $"\"{path}\"") { UseShellExecute = true })?.Dispose();
     }
 
+    /// <summary>Shows an open dialog for one existing file; returns the chosen path or null.</summary>
+    public static string? AskOpenPath(string title, string? initialPath = null)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = title,
+            Filter = "All files (*.*)|*.*",
+            CheckFileExists = true,
+            Multiselect = false,
+        };
+        string? folder = string.IsNullOrEmpty(initialPath) ? null : Path.GetDirectoryName(initialPath);
+        if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
+        {
+            dialog.InitialDirectory = folder;
+        }
+
+        return dialog.ShowDialog(Application.Current.MainWindow) == true ? dialog.FileName : null;
+    }
+
     /// <summary>Shows a save dialog; returns the chosen path or null.</summary>
     public static string? AskSavePath(string suggestedName, string filter, string? folder, string title = "Export")
     {

@@ -30,7 +30,7 @@
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
       <Border Width="48" Height="48" CornerRadius="10" Background="{DynamicResource Brush.Bg.Surface}" BorderBrush="{DynamicResource Brush.Border.Subtle}" BorderThickness="1" Margin="0,0,16,0" VerticalAlignment="Top">
-        <Image Source="{Binding Icon}" Width="32" Height="32" RenderOptions.BitmapScalingMode="HighQuality" />
+        <controls:AppIcon Source="{Binding Icon}" Width="32" Height="32" />
       </Border>
       <StackPanel Grid.Column="1">
         <StackPanel Orientation="Horizontal">
@@ -54,6 +54,16 @@
             </controls:IconText.Text>
           </controls:IconText>
           <TextBlock Text="{Binding SignatureText}" Style="{StaticResource Text.Caption}" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+          <TextBlock Text="SHA-256" Style="{StaticResource Text.Label}" VerticalAlignment="Center" Margin="0,0,8,0" />
+          <TextBox Text="{Binding Sha256Text, Mode=OneWay}" Style="{StaticResource TextBox.Value}" FontFamily="{DynamicResource Font.Mono}"
+                   FontSize="{DynamicResource FontSize.Caption}" Foreground="{DynamicResource Brush.Text.Secondary}" VerticalAlignment="Center"
+                   AutomationProperties.Name="SHA-256 of the executable" ToolTip="Computed locally from the executable file; nothing is looked up online." />
+          <Button Style="{StaticResource Button.Icon}" ui:Ui.Icon="{x:Static ui:Glyphs.Copy}" Command="{Binding CopySha256Command}" Width="26" Height="26" Margin="4,0,0,0"
+                  ToolTip="Copy SHA-256" AutomationProperties.Name="Copy SHA-256" />
+          <Button Style="{StaticResource Button.Link}" Content="Verify…" Command="{Binding VerifyHashCommand}" VerticalAlignment="Center" Margin="8,0,0,0"
+                  ToolTip="Open the file hash checker to compare with a published checksum" />
         </StackPanel>
       </StackPanel>
       <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">

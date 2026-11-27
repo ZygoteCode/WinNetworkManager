@@ -244,7 +244,7 @@ public sealed class ThemeManager : IDisposable
             Set("Brush.Bg." + key, window);
         }
 
-        foreach (string key in new[] { "Default", "Subtle", "Strong" })
+        foreach (string key in new[] { "Default", "Subtle", "Strong", "Card" })
         {
             Set("Brush.Border." + key, text);
         }

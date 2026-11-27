@@ -198,6 +198,59 @@ public sealed partial class ProcessesViewModel : PageViewModel, ISortableTable
         Rebuild();
     }
 
+    /// <summary>
+    /// Ends the selected process — or every running instance of a selected group — after confirmation. Each instance is
+    /// identified by PID and creation time, so a PID reused since the row was shown is never ended.
+    /// </summary>
+    [RelayCommand]
+    private async Task EndProcessAsync()
+    {
+        var targets = (SelectedRow switch
+        {
+            ProcessRow p => [p],
+            AppGroupRow g => g.Children,
+            _ => [],
+        }).Where(r => !r.IsExited).ToList();
+        if (targets.Count == 0)
+        {
+            return;
+        }
+
+        var first = targets[0];
+        string what = targets.Count == 1 ? $"{first.Name} (PID {first.PidText})" : $"all {targets.Count} running instances of {first.Name}";
+        var message = new System.Text.StringBuilder()
+            .Append(CultureInfo.CurrentCulture, $"End {what}?")
+            .AppendLine().AppendLine()
+            .Append("The program is closed immediately, without asking it to save: unsaved work in it is lost.");
+        var services = targets.SelectMany(t => t.View?.Services ?? []).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (services.Count > 0)
+        {
+            message.AppendLine().AppendLine().Append(CultureInfo.CurrentCulture, $"It hosts Windows services ({string.Join(", ", services.Take(6))}{(services.Count > 6 ? ", …" : string.Empty)}); they stop with it.");
+        }
+
+        if (targets.Any(t => t.IsSystem))
+        {
+            message.AppendLine().AppendLine().Append("This is a system process: ending it can make Windows unstable until you restart.");
+        }
+
+        if (!Shell.Dialogs.Confirm(targets.Count == 1 ? "End process" : "End processes", message.ToString(), "End process", kind: Shell.DialogKind.Warning, destructive: true))
+        {
+            return;
+        }
+
+        var keys = targets.Select(t => t.Key).ToList();
+        var results = await Task.Run(() => keys.Select(k => Platform.Windows.Processes.ProcessTerminator.Terminate(k, TimeSpan.FromSeconds(3))).ToList()).ConfigureAwait(true);
+        var problems = results.Where(r => !r.IsGone).ToList();
+        if (problems.Count > 0)
+        {
+            string text = problems.Count == 1 && results.Count == 1
+                ? problems[0].Message
+                : $"{results.Count - problems.Count} of {results.Count} processes were ended." + Environment.NewLine + Environment.NewLine +
+                  string.Join(Environment.NewLine, problems.Select(p => p.Message).Distinct());
+            Shell.Dialogs.Inform("End process", text, problems.Any(p => p.Outcome is Platform.Windows.Processes.TerminateOutcome.Failed) ? Shell.DialogKind.Error : Shell.DialogKind.Warning);
+        }
+    }
+
     [RelayCommand]
     private void ClearSearch() => SearchText = string.Empty;
 

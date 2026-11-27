@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:WinNetworkManager.App.ViewModels"
+             xmlns:diag="clr-namespace:WinNetworkManager.Diagnostics;assembly=WinNetworkManager.Diagnostics"
              xmlns:common="clr-namespace:WinNetworkManager.App.Common"
              xmlns:controls="clr-namespace:WinNetworkManager.UI.Controls;assembly=WinNetworkManager.UI"
              xmlns:ui="clr-namespace:WinNetworkManager.UI;assembly=WinNetworkManager.UI"
@@ -440,6 +441,114 @@
             </DataGrid>
           </Border>
         </DockPanel>
+      </TabItem>
+
+      <!-- ═════════ File hash ═════════ -->
+      <TabItem Header="File hash">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
+          <StackPanel Margin="0,12,0,0" AllowDrop="True" Background="Transparent" DragOver="OnHashDragOver" Drop="OnHashDrop">
+            <WrapPanel>
+              <TextBox Style="{StaticResource TextBox.Mono}" Width="520" Margin="0,0,8,8" Text="{Binding HashPath, UpdateSourceTrigger=PropertyChanged}"
+                       ui:Ui.Placeholder="File path — or drop a file on this page" AutomationProperties.Name="File to hash">
+                <TextBox.InputBindings>
+                  <KeyBinding Key="Enter" Command="{Binding RunHashCommand}" />
+                </TextBox.InputBindings>
+              </TextBox>
+              <Button Content="Browse…" ui:Ui.Icon="{x:Static ui:Glyphs.FolderOpen}" Command="{Binding BrowseHashFileCommand}" Margin="0,0,8,8" />
+              <Button Style="{StaticResource Button.Accent}" Content="Compute" ui:Ui.Icon="{x:Static ui:Glyphs.Play}" Command="{Binding RunHashCommand}" Margin="0,0,8,8"
+                      Visibility="{Binding RunHashCommand.IsRunning, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}" />
+              <Button Content="Stop" ui:Ui.Icon="{x:Static ui:Glyphs.Stop}" Command="{Binding RunHashCancelCommand}" Margin="0,0,8,8"
+                      Visibility="{Binding RunHashCommand.IsRunning, Converter={StaticResource BoolToVisibility}}" />
+            </WrapPanel>
+            <TextBox Style="{StaticResource TextBox.Mono}" Width="520" HorizontalAlignment="Left" Margin="0,0,0,8" Text="{Binding HashExpected, UpdateSourceTrigger=PropertyChanged}"
+                     ui:Ui.Placeholder="Expected checksum (optional) — paste it from the download page" AutomationProperties.Name="Expected checksum" />
+
+            <ProgressBar Value="{Binding HashProgress, Mode=OneWay}" Maximum="1" Width="520" HorizontalAlignment="Left" Margin="0,2,0,10"
+                         Visibility="{Binding RunHashCommand.IsRunning, Converter={StaticResource BoolToVisibility}}" />
+
+            <Border Style="{StaticResource Message}" Visibility="{Binding HashMessage, Converter={StaticResource NullToVisibility}}">
+              <TextBlock Text="{Binding HashMessage}" TextWrapping="Wrap" />
+            </Border>
+
+            <!-- Verdict: green on match, red on mismatch, neutral otherwise. -->
+            <Border Visibility="{Binding HashVerdictText, Converter={StaticResource NullToVisibility}}" Margin="0,4,0,12" MaxWidth="900" HorizontalAlignment="Left">
+              <Border.Style>
+                <Style TargetType="Border" BasedOn="{StaticResource InfoBar}">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding HashVerdict}" Value="{x:Static diag:HashMatchKind.Match}">
+                      <Setter Property="Background" Value="{DynamicResource Brush.Status.SuccessBg}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Success}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding HashVerdict}" Value="{x:Static diag:HashMatchKind.Mismatch}">
+                      <Setter Property="Background" Value="{DynamicResource Brush.Status.DangerBg}" />
+                      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Danger}" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Border.Style>
+              <DockPanel>
+                <controls:IconText DockPanel.Dock="Left" Margin="0,1,10,0" VerticalAlignment="Top" FontSize="{DynamicResource FontSize.Icon}">
+                  <controls:IconText.Style>
+                    <Style TargetType="controls:IconText" BasedOn="{StaticResource Icon}">
+                      <Setter Property="Text" Value="{x:Static ui:Glyphs.Info}" />
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Info}" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding HashVerdict}" Value="{x:Static diag:HashMatchKind.Match}">
+                          <Setter Property="Text" Value="{x:Static ui:Glyphs.Check}" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Success}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding HashVerdict}" Value="{x:Static diag:HashMatchKind.Mismatch}">
+                          <Setter Property="Text" Value="{x:Static ui:Glyphs.Error}" />
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Danger}" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </controls:IconText.Style>
+                </controls:IconText>
+                <TextBlock Text="{Binding HashVerdictText}" TextWrapping="Wrap" />
+              </DockPanel>
+            </Border>
+
+            <!-- Results -->
+            <Border Style="{StaticResource Card}" MaxWidth="1100" HorizontalAlignment="Left" Margin="0,0,0,12"
+                    Visibility="{Binding HashSummary, Converter={StaticResource NullToVisibility}}">
+              <StackPanel>
+                <TextBlock Text="Checksums" Style="{StaticResource Text.Subtitle}" />
+                <TextBlock Text="{Binding HashSummary}" Style="{StaticResource Text.Caption}" Margin="0,2,0,10" />
+                <ItemsControl ItemsSource="{Binding HashRows}" Focusable="False">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:HashRow}">
+                      <Grid Margin="0,0,0,6">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="90" />
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="Auto" />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding Name}" Style="{StaticResource Text.BodyStrong}" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                          <TextBox Text="{Binding Hex, Mode=OneWay}" Style="{StaticResource TextBox.Value}" FontFamily="{DynamicResource Font.Mono}" TextWrapping="Wrap"
+                                   AutomationProperties.Name="{Binding Name}" />
+                          <TextBlock Text="{Binding Note}" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Text.Tertiary}"
+                                     Visibility="{Binding Note, Converter={StaticResource NullToVisibility}}" />
+                        </StackPanel>
+                        <controls:IconText Grid.Column="2" Style="{StaticResource Icon}" Text="{x:Static ui:Glyphs.Check}" Foreground="{DynamicResource Brush.Status.Success}"
+                                           Margin="8,0" ToolTip="Matches the expected checksum"
+                                           Visibility="{Binding IsMatch, Converter={StaticResource BoolToVisibility}}" />
+                        <Button Grid.Column="3" Style="{StaticResource Button.Icon}" ui:Ui.Icon="{x:Static ui:Glyphs.Copy}" ToolTip="Copy"
+                                AutomationProperties.Name="{Binding Name, StringFormat='Copy {0}'}"
+                                Command="{Binding DataContext.CopyHashCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </Border>
+
+            <TextBlock Style="{StaticResource Text.Caption}" TextWrapping="Wrap" MaxWidth="820" HorizontalAlignment="Left"
+                       Text="Computes SHA-256, SHA-512, SHA-1 and MD5 in one read of the file, on this computer: nothing is uploaded or looked up online. Paste the checksum published with a download to check that the file arrived intact; the algorithm is recognised from its length. A matching checksum proves the file is the published one only if you got the checksum from a source you trust, such as the publisher's HTTPS site." />
+          </StackPanel>
+        </ScrollViewer>
       </TabItem>
     </TabControl>
   </DockPanel>

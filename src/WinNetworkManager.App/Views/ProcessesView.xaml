@@ -92,6 +92,9 @@
             <Separator />
             <MenuItem Header="Open file location" Command="{Binding OpenLocationCommand}" />
             <MenuItem Header="Hide this process" Command="{Binding HideProcessCommand}" ToolTip="Adds the image name to Settings → Hidden processes" />
+            <Separator />
+            <MenuItem Header="End process…" InputGestureText="Del" Command="{Binding EndProcessCommand}"
+                      ToolTip="Closes the process immediately, after confirmation. Unsaved work in it is lost." />
           </ContextMenu>
         </DataGrid.ContextMenu>
         <DataGrid.Columns>
@@ -112,7 +115,7 @@
                       </controls:IconText.Text>
                     </controls:IconText>
                   </Button>
-                  <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,8,0" VerticalAlignment="Center" />
+                  <controls:AppIcon Source="{Binding Icon}" Margin="0,0,8,0" VerticalAlignment="Center" />
                   <TextBlock Text="{Binding Name}" Style="{StaticResource Cell.Text}" />
                   <Border Style="{StaticResource Badge}" Margin="8,0,0,0" Padding="6,0" Visibility="{Binding IsExited, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock Text="exited" FontSize="{DynamicResource FontSize.Caption}" Foreground="{DynamicResource Brush.Text.Secondary}" />

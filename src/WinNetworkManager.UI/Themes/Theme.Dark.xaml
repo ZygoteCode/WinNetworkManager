@@ -18,6 +18,11 @@
   <SolidColorBrush x:Key="Brush.Border.Subtle" Color="#20252E" />
   <SolidColorBrush x:Key="Brush.Border.Strong" Color="#3B4252" />
   <SolidColorBrush x:Key="Brush.Border.Divider" Color="#1F242C" />
+  <!-- Card edge: catches light at the top and fades into the surface, giving cards depth without shadows. -->
+  <LinearGradientBrush x:Key="Brush.Border.Card" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#323946" Offset="0" />
+    <GradientStop Color="#1E222A" Offset="1" />
+  </LinearGradientBrush>
 
   <SolidColorBrush x:Key="Brush.Text.Primary" Color="#E9ECF2" />
   <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#A6ADBB" />
@@ -39,8 +44,15 @@
   <SolidColorBrush x:Key="Brush.Data.Udp" Color="#34D3B4" />
   <SolidColorBrush x:Key="Brush.Data.Loopback" Color="#8A93A3" />
   <SolidColorBrush x:Key="Brush.Data.Neutral" Color="#5B6474" />
-  <SolidColorBrush x:Key="Brush.Data.DownloadFill" Color="#262EC4F0" />
-  <SolidColorBrush x:Key="Brush.Data.UploadFill" Color="#1FFFA43A" />
+  <!-- Area fills fade from the series colour at the peak to transparent at the baseline. -->
+  <LinearGradientBrush x:Key="Brush.Data.DownloadFill" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#552EC4F0" Offset="0" />
+    <GradientStop Color="#002EC4F0" Offset="1" />
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="Brush.Data.UploadFill" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#40FFA43A" Offset="0" />
+    <GradientStop Color="#00FFA43A" Offset="1" />
+  </LinearGradientBrush>
   <SolidColorBrush x:Key="Brush.Chart.Grid" Color="#1E232C" />
   <SolidColorBrush x:Key="Brush.Chart.Axis" Color="#7C8493" />
   <SolidColorBrush x:Key="Brush.Chart.Crosshair" Color="#66E9ECF2" />

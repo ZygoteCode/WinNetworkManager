@@ -81,6 +81,21 @@ internal static unsafe partial class ProcessNative
     [LibraryImport("kernel32.dll", SetLastError = true)]
     public static partial SafeProcessHandle OpenProcess(uint desiredAccess, [MarshalAs(UnmanagedType.Bool)] bool inheritHandle, uint processId);
 
+    public const uint PROCESS_TERMINATE = 0x0001;
+    public const uint WAIT_OBJECT_0 = 0x00000000;
+    public const uint WAIT_TIMEOUT = 0x00000102;
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool TerminateProcess(SafeProcessHandle process, uint exitCode);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    public static partial uint WaitForSingleObject(SafeProcessHandle handle, uint milliseconds);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool IsProcessCritical(SafeProcessHandle process, [MarshalAs(UnmanagedType.Bool)] out bool critical);
+
     [LibraryImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool GetProcessTimes(SafeProcessHandle process, long* creationTime, long* exitTime, long* kernelTime, long* userTime);

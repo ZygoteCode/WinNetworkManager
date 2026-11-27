@@ -1,6 +1,7 @@
 <UserControl x:Class="WinNetworkManager.App.Views.ConnectionsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:WinNetworkManager.UI.Controls;assembly=WinNetworkManager.UI"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:WinNetworkManager.App.ViewModels"
@@ -136,7 +137,7 @@
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate DataType="{x:Type vm:TcpRow}">
                   <StackPanel Orientation="Horizontal">
-                    <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,8,0" />
+                    <controls:AppIcon Source="{Binding Icon}" Margin="0,0,8,0" />
                     <TextBlock Text="{Binding ProcessName}" Style="{StaticResource Cell.Text}" />
                   </StackPanel>
                 </DataTemplate>
@@ -192,7 +193,7 @@
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate DataType="{x:Type vm:UdpRow}">
                   <StackPanel Orientation="Horizontal">
-                    <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,8,0" />
+                    <controls:AppIcon Source="{Binding Icon}" Margin="0,0,8,0" />
                     <TextBlock Text="{Binding ProcessName}" Style="{StaticResource Cell.Text}" />
                   </StackPanel>
                 </DataTemplate>
