@@ -56,7 +56,7 @@
   <!-- ═══════════════════════════ Surfaces ═══════════════════════════ -->
   <Style x:Key="Card" TargetType="Border">
     <Setter Property="Background" Value="{DynamicResource Brush.Bg.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Card}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{DynamicResource Radius.Card}" />
     <Setter Property="Padding" Value="{DynamicResource Pad.Card}" />
@@ -93,7 +93,7 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Bg.SurfaceHover}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{DynamicResource Radius.Pill}" />
+    <Setter Property="ui:Ui.IsPill" Value="True" />
     <Setter Property="Padding" Value="8,1" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
@@ -117,7 +117,8 @@
       <Setter.Value>
         <ControlTemplate TargetType="ButtonBase">
           <Border x:Name="Root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{TemplateBinding ui:Ui.CornerRadius}">
+                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{TemplateBinding ui:Ui.CornerRadius}"
+                  ui:Ui.IsPill="{TemplateBinding ui:Ui.IsPill}">
             <Grid Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -197,14 +198,20 @@
 
   <!-- Toggle chip (filters) -->
   <Style x:Key="Toggle.Chip" TargetType="ToggleButton" BasedOn="{StaticResource Button.Standard}">
-    <Setter Property="Padding" Value="10,3" />
-    <Setter Property="ui:Ui.CornerRadius" Value="{DynamicResource Radius.Pill}" />
+    <Setter Property="Padding" Value="14,3" />
+    <Setter Property="ui:Ui.IsPill" Value="True" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Style.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Strong}" />
+      </Trigger>
       <Trigger Property="IsChecked" Value="True">
         <Setter Property="Background" Value="{DynamicResource Brush.AccentSubtle}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
-        <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Brush.AccentSubtleStrong}" />
+        <Setter Property="Foreground" Value="{DynamicResource Brush.AccentText}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
       </Trigger>
     </Style.Triggers>
   </Style>

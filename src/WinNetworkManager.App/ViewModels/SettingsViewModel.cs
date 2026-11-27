@@ -71,9 +71,9 @@ public sealed partial class SettingsViewModel : PageViewModel
     /// <summary>Units.</summary>
     public IReadOnlyList<Choice<DataUnitSystem>> UnitSystems { get; } =
     [
-        new(DataUnitSystem.DecimalBytes, "Bytes, decimal (1 kB = 1000 B) — like Windows Task Manager rates"),
-        new(DataUnitSystem.BinaryBytes, "Bytes, binary (1 KiB = 1024 B) — like File Explorer sizes"),
-        new(DataUnitSystem.DecimalBits, "Bits (1 Mbps = 1,000,000 bit/s) — like link speeds"),
+        new(DataUnitSystem.DecimalBytes, "Bytes, decimal (1 kB = 1000 B)"),
+        new(DataUnitSystem.BinaryBytes, "Bytes, binary (1 KiB = 1024 B)"),
+        new(DataUnitSystem.DecimalBits, "Bits (1 Mbps = 1,000,000 bit/s)"),
     ];
 
     /// <summary>Densities.</summary>

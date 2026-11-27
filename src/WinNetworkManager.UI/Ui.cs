@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace WinNetworkManager.UI;
@@ -21,6 +22,49 @@ public static class Ui
     /// <summary>Brush of a status indicator (badges, row markers).</summary>
     public static readonly DependencyProperty IndicatorBrushProperty =
         DependencyProperty.RegisterAttached("IndicatorBrush", typeof(Brush), typeof(Ui), new FrameworkPropertyMetadata(null));
+
+    /// <summary>
+    /// Makes a <see cref="Border"/> a true pill (fully rounded ends). WPF does not clamp an oversized corner radius the
+    /// way CSS does — a radius larger than half the height turns the whole shape into an ellipse — so the radius is set
+    /// to half the rendered height whenever the size changes.
+    /// </summary>
+    public static readonly DependencyProperty IsPillProperty =
+        DependencyProperty.RegisterAttached("IsPill", typeof(bool), typeof(Ui), new FrameworkPropertyMetadata(false, OnIsPillChanged));
+
+    /// <summary>Gets whether the border is a pill.</summary>
+    public static bool GetIsPill(DependencyObject element) => (bool)element.GetValue(IsPillProperty);
+
+    /// <summary>Sets whether the border is a pill.</summary>
+    public static void SetIsPill(DependencyObject element, bool value) => element.SetValue(IsPillProperty, value);
+
+    private static void OnIsPillChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not Border border)
+        {
+            return;
+        }
+
+        border.SizeChanged -= OnPillSizeChanged;
+        if ((bool)e.NewValue)
+        {
+            border.SizeChanged += OnPillSizeChanged;
+            ApplyPill(border);
+        }
+        else
+        {
+            border.ClearValue(Border.CornerRadiusProperty);
+        }
+    }
+
+    private static void OnPillSizeChanged(object sender, SizeChangedEventArgs e) => ApplyPill((Border)sender);
+
+    private static void ApplyPill(Border border)
+    {
+        if (border.ActualHeight > 0)
+        {
+            border.CornerRadius = new CornerRadius(border.ActualHeight / 2);
+        }
+    }
 
     /// <summary>Gets the placeholder.</summary>
     public static string GetPlaceholder(DependencyObject element) => (string)element.GetValue(PlaceholderProperty);
