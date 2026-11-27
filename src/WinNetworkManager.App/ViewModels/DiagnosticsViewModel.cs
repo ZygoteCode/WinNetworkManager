@@ -351,6 +351,7 @@ public sealed partial class DiagnosticsViewModel : PageViewModel
     // ── File hash ─────────────────────────────────────────────────────────────────────────────────
 
     private FileHashResult? _hashResult;
+    private string? _hashRunningPath;
 
     /// <summary>File to hash.</summary>
     [ObservableProperty] public partial string HashPath { get; set; } = string.Empty;
@@ -397,9 +398,8 @@ public sealed partial class DiagnosticsViewModel : PageViewModel
                 break;
             case "hash":
                 Tool = DiagnosticTool.FileHash;
-                HashPath = target;
                 HashExpected = string.Empty; // a value left from another file would report a false mismatch
-                StartIfIdle(RunHashCommand);
+                _ = HashNewFileAsync(target);
                 break;
             case "dns":
                 Tool = DiagnosticTool.Dns;
@@ -440,7 +440,13 @@ public sealed partial class DiagnosticsViewModel : PageViewModel
 
     partial void OnHashPathChanged(string value)
     {
-        if (_hashResult is not null && !string.Equals(_hashResult.Path, value.Trim().Trim('"'), StringComparison.OrdinalIgnoreCase))
+        // A computation still running for another file must not report its result next to the new path.
+        if (RunHashCommand.IsRunning && !SameHashPath(_hashRunningPath, value))
+        {
+            RunHashCancelCommand.Execute(null);
+        }
+
+        if (_hashResult is not null && !string.Equals(_hashResult.Path, NormalizeHashPath(value), StringComparison.OrdinalIgnoreCase))
         {
             _hashResult = null;
             HashRows.Clear();
@@ -454,19 +460,34 @@ public sealed partial class DiagnosticsViewModel : PageViewModel
     public void HashDroppedFile(string path)
     {
         Tool = DiagnosticTool.FileHash;
-        HashPath = path;
-        StartIfIdle(RunHashCommand);
+        _ = HashNewFileAsync(path);
     }
 
     [RelayCommand]
-    private void BrowseHashFile()
+    private async Task BrowseHashFileAsync()
     {
         if (ShellActions.AskOpenPath("Choose a file to hash", HashPath) is { } path)
         {
-            HashPath = path;
-            StartIfIdle(RunHashCommand);
+            await HashNewFileAsync(path).ConfigureAwait(true);
         }
     }
+
+    /// <summary>Switches to <paramref name="path"/>: a running computation for another file is cancelled first.</summary>
+    private async Task HashNewFileAsync(string path)
+    {
+        HashPath = path; // cancels a computation running for a different file (OnHashPathChanged)
+        if (RunHashCommand.IsRunning && RunHashCommand.ExecutionTask is { } running)
+        {
+            await running.ConfigureAwait(true); // RunHashAsync handles its own cancellation and never throws it
+        }
+
+        StartIfIdle(RunHashCommand);
+    }
+
+    private static string NormalizeHashPath(string? path) => (path ?? string.Empty).Trim().Trim('"');
+
+    private static bool SameHashPath(string? a, string? b) =>
+        string.Equals(NormalizeHashPath(a), NormalizeHashPath(b), StringComparison.OrdinalIgnoreCase);
 
     [RelayCommand]
     private static void CopyHash(HashRow? row) => ShellActions.Copy(row?.Hex);
@@ -486,10 +507,17 @@ public sealed partial class DiagnosticsViewModel : PageViewModel
             return;
         }
 
+        string requested = HashPath;
+        _hashRunningPath = requested;
         try
         {
             var progress = new Progress<double>(p => HashProgress = p);
-            var result = await Task.Run(() => FileHashTool.ComputeAsync(HashPath, FileHashTool.All, progress, token), token).ConfigureAwait(true);
+            var result = await Task.Run(() => FileHashTool.ComputeAsync(requested, FileHashTool.All, progress, token), token).ConfigureAwait(true);
+            if (!SameHashPath(requested, HashPath))
+            {
+                return; // the user chose another file meanwhile: these hashes belong to the old one
+            }
+
             _hashResult = result;
             HashProgress = 1;
             HashSummary = $"{Fmt.Bytes(result.Length)} ({result.Length.ToString("N0", CultureInfo.CurrentCulture)} bytes) · read in {Ms(result.ElapsedMs)}";
@@ -497,11 +525,16 @@ public sealed partial class DiagnosticsViewModel : PageViewModel
         }
         catch (OperationCanceledException)
         {
-            HashMessage = "Stopped.";
+            // Cancelled because another file was chosen: say nothing, the new computation follows.
+            HashMessage = SameHashPath(requested, HashPath) ? "Stopped." : null;
         }
-        catch (DiagnosticsException ex)
+        catch (DiagnosticsException ex) when (SameHashPath(requested, HashPath))
         {
             HashMessage = ex.Message;
+        }
+        catch (DiagnosticsException)
+        {
+            // The error concerns a file the user no longer asks about.
         }
     }
 
