@@ -40,6 +40,10 @@ public partial class ProcessesView : UserControl
                 vm.OpenDetailsCommand.Execute(vm.SelectedRow);
                 e.Handled = true;
                 break;
+            case Key.Delete:
+                vm.EndProcessCommand.Execute(null); // always asks for confirmation first
+                e.Handled = true;
+                break;
             case Key.Right when vm.SelectedRow is AppGroupRow { IsExpanded: false } group:
                 vm.ToggleGroupCommand.Execute(group);
                 e.Handled = true;

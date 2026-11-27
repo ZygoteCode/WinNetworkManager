@@ -92,6 +92,9 @@
             <Separator />
             <MenuItem Header="Open file location" Command="{Binding OpenLocationCommand}" />
             <MenuItem Header="Hide this process" Command="{Binding HideProcessCommand}" ToolTip="Adds the image name to Settings → Hidden processes" />
+            <Separator />
+            <MenuItem Header="End process…" InputGestureText="Del" Command="{Binding EndProcessCommand}"
+                      ToolTip="Closes the process immediately, after confirmation. Unsaved work in it is lost." />
           </ContextMenu>
         </DataGrid.ContextMenu>
         <DataGrid.Columns>

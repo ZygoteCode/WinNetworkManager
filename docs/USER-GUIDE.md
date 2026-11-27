@@ -28,6 +28,11 @@ monitoring started, sockets, publisher and status. Exited processes stay listed 
   system accounts; **Show idle** toggles processes that never used the network.
 - Double-click or Enter opens the process details; the context menu copies name, PID or path, opens the file
   location, shows the connections of the process or hides it.
+- **End process…** (context menu or Del) closes the selected process — or every running instance of a selected group —
+  after confirmation, like Task Manager's *End task*: unsaved work in it is lost. The instance is identified by PID and
+  creation time, so a PID that Windows reused for another program is never ended. Critical Windows processes are
+  refused (ending them crashes Windows). Without administrator rights only your own, non-elevated processes can be
+  ended; for others Windows denies access and WinNetworkManager says so.
 - Right-click a column header to show or hide columns; widths, order and sorting are remembered.
 
 ### Search and filters
@@ -173,6 +178,7 @@ Numbers and dates follow the regional format chosen in Windows; all text is Engl
 | Ctrl+F | Search (Processes, Connections) |
 | Esc | Clear the search |
 | Enter | Open the selected process |
+| Del | End the selected process (asks for confirmation) |
 | Ctrl+C | Copy the selected row |
 | Shift+F10 / Menu key | Context menu (also on column headers) |
 | F5 | Reload the history range |
